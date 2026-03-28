@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -242,6 +242,105 @@
     }
     .nav-icon svg { width: 20px; height: 20px; }
 
+    /* ── Onboarding overlay ────────────────────────────────────────── */
+    #ov-onboard {
+      background: rgba(0,0,0,0.96);
+      padding: 0;
+      justify-content: flex-start;
+      overflow: hidden;
+    }
+    .onboard-slide {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 24px 0;
+      flex: 1;
+      gap: 14px;
+      text-align: center;
+    }
+    .onboard-slide.active { display: flex; }
+    .onboard-svg-wrap {
+      width: 160px; height: 148px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 12px;
+    }
+    .onboard-step {
+      font-size: 11px; font-weight: 800; color: var(--brand);
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .onboard-title {
+      font-size: 26px; font-weight: 800; color: #fff;
+      line-height: 1.2; letter-spacing: -0.3px;
+    }
+    .onboard-body {
+      font-size: 15px; color: rgba(255,255,255,0.65);
+      line-height: 1.6; max-width: 300px;
+    }
+    .onboard-dots {
+      display: flex; gap: 8px;
+      padding: 16px 0 8px;
+    }
+    .onboard-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      transition: background 0.2s;
+    }
+    .onboard-dot.active { background: var(--brand); width: 20px; border-radius: 4px; }
+    .onboard-footer {
+      width: 100%; padding: 16px 24px 32px;
+      display: flex; flex-direction: column; gap: 10px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .onboard-next {
+      width: 100%; min-height: 52px;
+      border-radius: var(--radius-lg);
+      background: var(--brand); color: #fff;
+      border: none; font-size: 17px; font-weight: 800;
+      cursor: pointer;
+    }
+    .onboard-skip {
+      background: none; border: none;
+      color: rgba(255,255,255,0.4); font-size: 14px;
+      cursor: pointer; padding: 4px;
+    }
+
+    /* ── Real-time feedback banner ──────────────────────────────────── */
+    #rt-feedback {
+      position: absolute;
+      top: 68px; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.78);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      font-size: 18px; font-weight: 800;
+      padding: 10px 22px;
+      border-radius: var(--radius-lg);
+      white-space: nowrap;
+      z-index: 4;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    #rt-feedback.visible { opacity: 1; }
+
+    /* ── Help (?) button ────────────────────────────────────────────── */
+    #help-btn {
+      position: absolute; top: 12px; left: 12px;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.55);
+      border: 1.5px solid rgba(255,255,255,0.35);
+      color: #fff; font-size: 18px; font-weight: 800;
+      cursor: pointer; z-index: 2;
+      display: flex; align-items: center; justify-content: center;
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+    }
+
     /* ── Portrait hint ─────────────────────────────────────────────── */
     @media (orientation: landscape) and (max-height: 480px) {
       #rotate-hint { display: flex; }
@@ -291,8 +390,113 @@
     <p style="font-size:14px;">Step back so your full body is visible</p>
   </div>
 
-  <!-- Auto-capture ring (top-left) -->
-  <div id="capture-ring">
+  <!-- Real-time feedback banner -->
+  <div id="rt-feedback"></div>
+
+  <!-- Help button (top-left) -->
+  <button id="help-btn" aria-label="사용 방법">?</button>
+
+  <!-- Auto-capture ring (repositioned to avoid overlap with help btn) -->
+  <div id="capture-ring" style="top:62px;left:12px;">
+    <svg viewBox="0 0 52 52">
+      <circle class="track" cx="26" cy="26" r="22"/>
+      <circle class="fill" id="ring-fill" cx="26" cy="26" r="22"/>
+    </svg>
+    <div class="ring-label" id="ring-label">MAX</div>
+  </div>
+
+  <!-- ── Onboarding overlay ─────────────────────────────────────── -->
+  <div id="ov-onboard" class="overlay" style="display:none;">
+
+    <!-- Slide 1: 위치 -->
+    <div class="onboard-slide active" data-slide="0" style="flex:1;width:100%;">
+      <div class="onboard-svg-wrap">
+        <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" width="136" height="136">
+          <!-- Camera frame -->
+          <rect x="8" y="8" width="104" height="104" rx="10" stroke="#00B4D8" stroke-width="2.5" stroke-dasharray="6,4"/>
+          <!-- Person (small — in frame) -->
+          <circle cx="60" cy="38" r="9" stroke="#fff" stroke-width="2.5" fill="none"/>
+          <line x1="60" y1="47" x2="60" y2="78" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="60" y1="57" x2="48" y2="68" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="60" y1="57" x2="72" y2="68" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="60" y1="78" x2="50" y2="96" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="60" y1="78" x2="70" y2="96" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- Arrow pointing toward center of frame -->
+          <polygon points="60,108 56,100 64,100" fill="#00B4D8"/>
+        </svg>
+      </div>
+      <div class="onboard-step">1단계 / 3</div>
+      <div class="onboard-title">뒤로 물러서세요</div>
+      <div class="onboard-body">전신이 화면 안에 보여야 해요.<br>보통 카메라에서 약 2~3미터 거리입니다.</div>
+    </div>
+
+    <!-- Slide 2: 팔 들기 -->
+    <div class="onboard-slide" data-slide="1" style="flex:1;width:100%;">
+      <div class="onboard-svg-wrap">
+        <svg viewBox="0 0 120 140" fill="none" xmlns="http://www.w3.org/2000/svg" width="120" height="140">
+          <!-- Person -->
+          <circle cx="60" cy="22" r="10" stroke="#fff" stroke-width="2.5" fill="none"/>
+          <!-- Torso -->
+          <line x1="60" y1="32" x2="60" y2="80" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- Legs -->
+          <line x1="60" y1="80" x2="46" y2="110" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="60" y1="80" x2="74" y2="110" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- Good arm (down) -->
+          <line x1="60" y1="50" x2="44" y2="68" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- Affected arm going up -->
+          <line x1="60" y1="50" x2="82" y2="12" stroke="#ef4444" stroke-width="3.5" stroke-linecap="round"/>
+          <!-- Up arrow -->
+          <polygon points="82,4 88,14 76,14" fill="#ef4444"/>
+          <!-- Angle arc hint -->
+          <path d="M60,50 A32,32,0,0,1,80,22" stroke="#ef4444" stroke-width="1.5" fill="none" stroke-dasharray="3,3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="onboard-step">2단계 / 3</div>
+      <div class="onboard-title">아픈 팔을 드세요</div>
+      <div class="onboard-body">천천히 위로 들어 올리세요.<br>빨간 선이 아픈 팔, 파란 선이 건강한 팔이에요.</div>
+    </div>
+
+    <!-- Slide 3: 유지 & 자동 저장 -->
+    <div class="onboard-slide" data-slide="2" style="flex:1;width:100%;">
+      <div class="onboard-svg-wrap">
+        <svg viewBox="0 0 120 130" fill="none" xmlns="http://www.w3.org/2000/svg" width="120" height="130">
+          <!-- Person with arm at max -->
+          <circle cx="55" cy="22" r="10" stroke="#fff" stroke-width="2.5" fill="none"/>
+          <line x1="55" y1="32" x2="55" y2="80" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="55" y1="80" x2="42" y2="108" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="55" y1="80" x2="68" y2="108" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="55" y1="50" x2="38" y2="66" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="55" y1="50" x2="78" y2="8" stroke="#ef4444" stroke-width="3.5" stroke-linecap="round"/>
+          <!-- Ring countdown (teal) -->
+          <circle cx="95" cy="28" r="20" stroke="rgba(255,255,255,0.2)" stroke-width="4" fill="none"/>
+          <circle cx="95" cy="28" r="20" stroke="#00B4D8" stroke-width="4" fill="none"
+            stroke-dasharray="125.6" stroke-dashoffset="31" stroke-linecap="round"
+            transform="rotate(-90 95 28)"/>
+          <!-- Check inside ring -->
+          <text x="95" y="34" font-size="16" text-anchor="middle" fill="#00B4D8" font-weight="800">✓</text>
+        </svg>
+      </div>
+      <div class="onboard-step">3단계 / 3</div>
+      <div class="onboard-title">2초 유지하면 완료!</div>
+      <div class="onboard-body">최대로 올렸으면 그 자세를 2초 유지하세요.<br>파란 원이 채워지면 자동으로 저장됩니다.</div>
+    </div>
+
+    <!-- Dots + footer -->
+    <div style="width:100%;display:flex;flex-direction:column;align-items:center;">
+      <div class="onboard-dots">
+        <div class="onboard-dot active" id="dot-0"></div>
+        <div class="onboard-dot" id="dot-1"></div>
+        <div class="onboard-dot" id="dot-2"></div>
+      </div>
+      <div class="onboard-footer">
+        <button class="onboard-next" id="onboard-next">다음</button>
+        <button class="onboard-skip" id="onboard-skip">건너뛰기</button>
+      </div>
+    </div>
+  </div>
+  <!-- ── End onboarding ─────────────────────────────────────────── -->
+
+  <!-- Auto-capture ring (repositioned above) -->
     <svg viewBox="0 0 52 52">
       <circle class="track" cx="26" cy="26" r="22"/>
       <circle class="fill" id="ring-fill" cx="26" cy="26" r="22"/>
@@ -387,8 +591,71 @@
   import { renderShare }                 from './share.js';
   import { renderGuide, getCurrentPhase, getTargetAngleForPhase } from './guide.js';
 
+  // ── WebSpeech TTS ──────────────────────────────────────────────────────
+  const TTS_ENABLED = 'speechSynthesis' in window;
+  let _lastSpoken = '';
+  let _ttsTimeout = null;
+
+  function speak(text) {
+    if (!TTS_ENABLED) return;
+    if (text === _lastSpoken) return;
+    _lastSpoken = text;
+    clearTimeout(_ttsTimeout);
+    _ttsTimeout = setTimeout(() => {
+      window.speechSynthesis.cancel();
+      const utt = new SpeechSynthesisUtterance(text);
+      utt.lang = 'ko-KR';
+      utt.rate = 0.88;
+      utt.pitch = 1.0;
+      window.speechSynthesis.speak(utt);
+    }, 200);
+  }
+
+  // ── Onboarding ────────────────────────────────────────────────────────
+  const ONBOARD_KEY = 'shoulderrom_onboarded_v1';
+  const $onboard = document.getElementById('ov-onboard');
+  let _onboardSlide = 0;
+  const SLIDE_COUNT = 3;
+
+  function showOnboarding() {
+    $onboard.style.display = '';
+    _setSlide(0);
+  }
+
+  function _setSlide(n) {
+    _onboardSlide = n;
+    document.querySelectorAll('.onboard-slide').forEach((el, i) => {
+      el.classList.toggle('active', i === n);
+    });
+    document.querySelectorAll('.onboard-dot').forEach((el, i) => {
+      el.classList.toggle('active', i === n);
+    });
+    const nextBtn = document.getElementById('onboard-next');
+    nextBtn.textContent = n === SLIDE_COUNT - 1 ? '시작하기' : '다음';
+  }
+
+  function dismissOnboarding() {
+    $onboard.style.display = 'none';
+    try { localStorage.setItem(ONBOARD_KEY, '1'); } catch {}
+  }
+
+  document.getElementById('onboard-next').addEventListener('click', () => {
+    if (_onboardSlide < SLIDE_COUNT - 1) {
+      _setSlide(_onboardSlide + 1);
+    } else {
+      dismissOnboarding();
+    }
+  });
+  document.getElementById('onboard-skip').addEventListener('click', dismissOnboarding);
+  document.getElementById('help-btn').addEventListener('click', showOnboarding);
+
   // ── Bootstrap ───────────────────────────────────────────────────────
   initStorage();
+
+  // Show onboarding if first visit
+  try {
+    if (!localStorage.getItem(ONBOARD_KEY)) showOnboarding();
+  } catch { showOnboarding(); }
 
   // ── Guide: get target angle for current phase ────────────────────────
   const targetAngle = getTargetAngleForPhase(getCurrentPhase());
@@ -443,6 +710,46 @@
     $ringLabel.textContent = progress >= 1 ? '✓' : 'MAX';
   }
 
+  // ── Real-time feedback ───────────────────────────────────────────────
+  const $rtFeedback = document.getElementById('rt-feedback');
+  let _feedbackTimeout = null;
+  let _lastFeedbackKey = '';
+
+  function updateFeedback(angle) {
+    const target = targetAngle;
+    let msg = '';
+    let key = '';
+
+    if (angle === null || angle < 10) {
+      key = 'idle';
+      msg = '팔을 천천히 드세요 ↑';
+    } else if (angle < target * 0.5) {
+      key = 'low';
+      msg = '좋아요! 계속 드세요 ↑';
+    } else if (angle < target * 0.8) {
+      key = 'mid';
+      msg = '잘 하고 있어요!';
+    } else if (angle < target) {
+      key = 'near';
+      msg = '거의 다 왔어요! 조금만 더!';
+      if (key !== _lastFeedbackKey) speak('거의 다 왔어요, 조금만 더!');
+    } else {
+      key = 'hit';
+      msg = '🎉 목표 달성! 유지해주세요';
+      if (key !== _lastFeedbackKey) speak('목표 달성! 자세를 유지해주세요');
+    }
+
+    if (key !== _lastFeedbackKey) {
+      _lastFeedbackKey = key;
+      $rtFeedback.textContent = msg;
+      $rtFeedback.classList.add('visible');
+      clearTimeout(_feedbackTimeout);
+      _feedbackTimeout = setTimeout(() => {
+        if (key === 'idle') $rtFeedback.classList.remove('visible');
+      }, 3000);
+    }
+  }
+
   function checkPeakCapture(angle, side) {
     if (angle === null) return;
     const now = performance.now();
@@ -474,7 +781,9 @@
 
         const ok = saveSession(leftAngle ?? 0, rightAngle ?? 0);
         if (ok) {
-          showToast(`Peak captured — ${angle}°`);
+          showToast(`잘 하셨어요! ${angle}° 저장됐어요`);
+          speak(`잘 하셨어요! ${angle}도 저장됐습니다`);
+          _lastFeedbackKey = ''; // reset feedback so goal message shows again next rep
         }
       }
       return; // ring already updated
@@ -516,7 +825,8 @@
     if (leftAngle === null && rightAngle === null) return;
     const ok = saveSession(leftAngle ?? 0, rightAngle ?? 0);
     if (ok) {
-      showToast('Session saved');
+      showToast('저장됐어요!');
+      speak('저장됐습니다');
       setTimeout(() => showTab('progress-tab'), 600);
     }
   });
@@ -585,8 +895,12 @@
           // Enable Save once we have at least one reading
           saveBtn.disabled = (leftAngle === null && rightAngle === null);
 
-          // Auto-capture: track peak for affected side only
+          // Real-time feedback for affected side
           const affNow = getAffectedSide();
+          const affAngle = affNow === 'left' ? leftAngle : rightAngle;
+          updateFeedback(affAngle);
+
+          // Auto-capture: track peak for affected side only
           if (affNow === 'left'  && left)  checkPeakCapture(left.angle,  'left');
           if (affNow === 'right' && right) checkPeakCapture(right.angle, 'right');
 
