@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>ShoulderROM</title>
+
+  <!-- Vendored QR library (no CDN dependency — conference WiFi is unreliable) -->
+  <script src="vendor/qrcode.min.js"></script>
+
+  <!-- MediaPipe WASM preload hint — helps on slow connections -->
+  <link rel="preload" as="fetch"
+        href="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm/vision_wasm_internal.wasm"
+        crossorigin>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%; overflow: hidden;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #000; color: #111;
+    }
+
+    /* ── Tab containers ───────────────────────────────── */
+    .tab { position: absolute; inset: 0; bottom: 44px; }
+
+    /* ── Camera tab ───────────────────────────────────── */
+    #camera-tab { background: #000; }
+
+    #video {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1); /* mirror so user sees themselves naturally */
+      display: block;
+    }
+    #canvas {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+    }
+
+    /* State overlays */
+    .overlay {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 14px; text-align: center;
+    }
+    #ov-loading { background: rgba(0,0,0,0.85); }
+    #ov-denied  { background: rgba(0,0,0,0.90); }
+    #ov-npose   { background: rgba(0,0,0,0.45); pointer-events: none; }
+
+    .overlay p {
+      color: #fff; font-size: 15px; padding: 0 28px; line-height: 1.5;
+    }
+    .overlay button {
+      padding: 9px 22px; border-radius: 8px;
+      border: 1.5px solid #fff; background: transparent;
+      color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .spinner {
+      width: 30px; height: 30px;
+      border: 3px solid rgba(255,255,255,0.2);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Swap button (top-right corner of camera) */
+    #swap-btn {
+      position: absolute; top: 10px; right: 10px;
+      background: rgba(0,0,0,0.55); color: #fff;
+      border: 1.5px solid rgba(255,255,255,0.45);
+      border-radius: 6px; padding: 5px 12px;
+      font-size: 11px; font-weight: 600; cursor: pointer; z-index: 2;
+    }
+
+    /* HUD strip */
+    #hud {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: rgba(0,0,0,0.72);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 20px; z-index: 2;
+    }
+    .hud-stat { text-align: center; min-width: 64px; }
+    .hud-val  { font-size: 24px; font-weight: 700; color: #fff; line-height: 1; }
+    .hud-lbl  { font-size: 9px; color: #aaa; text-transform: uppercase; letter-spacing: 0.07em; margin-top: 2px; }
+    #save-btn {
+      padding: 9px 22px; border-radius: 20px;
+      background: #fff; color: #111; border: none;
+      font-size: 13px; font-weight: 700; cursor: pointer;
+    }
+    #save-btn:active { opacity: 0.75; }
+    #save-btn:disabled { opacity: 0.4; cursor: default; }
+
+    /* ── Progress / Share tabs ───────────────────────── */
+    #progress-tab, #share-tab {
+      background: #fff; overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* ── Bottom navigation ───────────────────────────── */
+    #nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: 44px; display: flex;
+      background: #fff; border-top: 1px solid #e5e5e5;
+      z-index: 10;
+    }
+    .nav-btn {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      font-size: 9px; color: #aaa; gap: 2px;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      cursor: pointer; user-select: none;
+      border-top: 2px solid transparent;
+      border: none; background: none;
+      padding: 0;
+    }
+    .nav-btn.active { color: #111; border-top: 2px solid #111; }
+    .nav-icon { font-size: 16px; }
+
+    /* Portrait hint on landscape phones */
+    @media (orientation: landscape) and (max-height: 480px) {
+      #rotate-hint {
+        display: flex; position: fixed; inset: 0; z-index: 999;
+        background: #000; color: #fff;
+        align-items: center; justify-content: center;
+        font-size: 15px; text-align: center; padding: 24px;
+      }
+    }
+    #rotate-hint { display: none; }
+  </style>
+</head>
+<body>
+
+<!-- Landscape warning (CSS-driven) -->
+<div id="rotate-hint">Please rotate to portrait mode for best results.</div>
+
+<!-- Camera tab -->
+<div id="camera-tab" class="tab">
+  <video id="video" autoplay playsinline muted></video>
+  <canvas id="canvas"></canvas>
+
+  <!-- Loading overlay -->
+  <div id="ov-loading" class="overlay">
+    <div class="spinner"></div>
+    <p>Loading pose model…</p>
+  </div>
+
+  <!-- Camera denied overlay -->
+  <div id="ov-denied" class="overlay" style="display:none;">
+    <p>Camera access required</p>
+    <button id="retry-btn">Try again</button>
+  </div>
+
+  <!-- No-pose overlay -->
+  <div id="ov-npose" class="overlay" style="display:none;">
+    <p>Move back — full body needed</p>
+  </div>
+
+  <button id="swap-btn">Swap sides</button>
+
+  <div id="hud">
+    <div class="hud-stat">
+      <div class="hud-val" id="hud-l">—°</div>
+      <div class="hud-lbl" id="lbl-l">Left</div>
+    </div>
+    <button id="save-btn" disabled>Save</button>
+    <div class="hud-stat">
+      <div class="hud-val" id="hud-r">—°</div>
+      <div class="hud-lbl" id="lbl-r">Right</div>
+    </div>
+  </div>
+</div>
+
+<!-- Progress tab -->
+<div id="progress-tab" class="tab" style="display:none;"></div>
+
+<!-- Share tab -->
+<div id="share-tab" class="tab" style="display:none;"></div>
+
+<!-- Bottom nav -->
+<nav id="nav">
+  <button class="nav-btn active" data-tab="camera-tab">
+    <span class="nav-icon">📷</span>Measure
+  </button>
+  <button class="nav-btn" data-tab="progress-tab">
+    <span class="nav-icon">📈</span>Progress
+  </button>
+  <button class="nav-btn" data-tab="share-tab">
+    <span class="nav-icon">🔗</span>Share
+  </button>
+</nav>
+
+<script type="module">
+  import { initPose }                    from './pose.js';
+  import { initStorage, saveSession }    from './storage.js';
+  import { getAffectedSide, toggleSwap } from './state.js';
+  import { renderProgress }              from './progress.js';
+  import { renderShare }                 from './share.js';
+
+  // ── Bootstrap ─────────────────────────────────────────────────────
+  initStorage();
+
+  // ── Shared state ──────────────────────────────────────────────────
+  let leftAngle  = null;
+  let rightAngle = null;
+  let noPoseTimeout = null;
+
+  // ── Tab navigation ────────────────────────────────────────────────
+  function showTab(name) {
+    document.querySelectorAll('.tab').forEach(el => {
+      el.style.display = el.id === name ? '' : 'none';
+    });
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === name);
+    });
+    if (name === 'progress-tab') renderProgress(document.getElementById('progress-tab'));
+    if (name === 'share-tab')    renderShare(document.getElementById('share-tab'), null);
+  }
+
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => showTab(btn.dataset.tab));
+  });
+
+  // ── Swap button ───────────────────────────────────────────────────
+  document.getElementById('swap-btn').addEventListener('click', () => {
+    const side = toggleSwap();
+    document.getElementById('lbl-l').textContent = side === 'left'  ? 'Left (Affected)'  : 'Left';
+    document.getElementById('lbl-r').textContent = side === 'right' ? 'Right (Affected)'  : 'Right';
+  });
+
+  // ── Save button ───────────────────────────────────────────────────
+  const saveBtn = document.getElementById('save-btn');
+  saveBtn.addEventListener('click', () => {
+    if (leftAngle === null && rightAngle === null) return;
+    const ok = saveSession(leftAngle ?? 0, rightAngle ?? 0);
+    if (ok) showTab('progress-tab');
+  });
+
+  // ── Retry camera ──────────────────────────────────────────────────
+  document.getElementById('retry-btn').addEventListener('click', startCamera);
+
+  // ── Camera + pose ─────────────────────────────────────────────────
+  const video  = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+
+  const $loading = document.getElementById('ov-loading');
+  const $denied  = document.getElementById('ov-denied');
+  const $npose   = document.getElementById('ov-npose');
+
+  async function startCamera() {
+    $denied.style.display  = 'none';
+    $loading.style.display = '';
+
+    // Camera API requires HTTPS (or localhost) — show a clear error on plain HTTP
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      $loading.style.display = 'none';
+      $denied.querySelector('p').textContent =
+        'Camera requires a secure connection (HTTPS). Open via localhost or deploy to Netlify.';
+      $denied.style.display = '';
+      return;
+    }
+
+    // Request camera — selfie mode, capped at 720p to avoid perf issues on mobile
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'user',
+          width:  { ideal: 1280, max: 1280 },
+          height: { ideal: 720,  max: 720  },
+        },
+      });
+    } catch (err) {
+      $loading.style.display = 'none';
+      $denied.querySelector('p').textContent =
+        err.name === 'NotAllowedError' ? 'Camera access denied — please allow in browser settings.' : 'Camera access required';
+      $denied.style.display  = '';
+      return;
+    }
+
+    video.srcObject = stream;
+    try { await video.play(); } catch { /* autoplay may be blocked — playsinline handles most cases */ }
+
+    // Init MediaPipe
+    try {
+      await initPose(video, canvas, {
+        onReady() {
+          $loading.style.display = 'none';
+        },
+
+        onFrame(left, right) {
+          // Update angle state
+          leftAngle  = left?.angle  ?? null;
+          rightAngle = right?.angle ?? null;
+
+          // HUD values
+          document.getElementById('hud-l').textContent = left  ? left.angle  + '°' : '—°';
+          document.getElementById('hud-r').textContent = right ? right.angle + '°' : '—°';
+
+          // Enable Save once we have at least one reading
+          saveBtn.disabled = (leftAngle === null && rightAngle === null);
+
+          // No-pose overlay with 800ms debounce (avoids flickering on brief occlusions)
+          clearTimeout(noPoseTimeout);
+          if (!left && !right) {
+            noPoseTimeout = setTimeout(() => { $npose.style.display = ''; }, 800);
+          } else {
+            $npose.style.display = 'none';
+          }
+        },
+
+        onError(err) {
+          console.error('MediaPipe init failed:', err);
+          $loading.innerHTML = '<p style="color:#fff;padding:24px;">Model failed to load — refresh the page</p>';
+        },
+      });
+    } catch (err) {
+      console.error('initPose threw:', err);
+      $loading.innerHTML = '<p style="color:#fff;padding:24px;">Model failed to load — refresh the page</p>';
+    }
+  }
+
+  startCamera();
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "type": "module",
+  "scripts": {
+    "serve": "npx serve . -p 3000 --no-clipboard",
+    "test": "node test.js"
+  }
+}
