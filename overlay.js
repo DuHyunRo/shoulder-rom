@@ -57,9 +57,8 @@ export function drawOverlay(ctx, canvas, left, right) {
     drawTargetArc(ctx, w, h, target, left, right, affected);
   }
 
-  // Bottom disclaimers
-  drawText(ctx, '±15° vs goniometer', 8, h - 8, 'left', 'rgba(255,255,255,0.65)', '10px system-ui');
-  drawText(ctx, 'Mirror view — R/L as labeled', w - 8, h - 8, 'right', 'rgba(255,255,255,0.65)', '10px system-ui');
+  // Disclaimer (small, right-aligned — for clinical context)
+  drawText(ctx, '±15° 오차 범위', w - 8, h - 8, 'right', 'rgba(255,255,255,0.55)', '11px system-ui');
 }
 
 // ── Private ──────────────────────────────────────────────────────────

@@ -22,6 +22,24 @@
       --radius-sm:   8px;
       --radius-md:   12px;
       --radius-lg:   20px;
+
+      /* Phase colors (synced with guide.js PROGRAM[].color) */
+      --phase-1: #6366f1;
+      --phase-2: #f59e0b;
+      --phase-3: #10b981;
+      --phase-4: #0066ff;
+
+      /* Text */
+      --text-primary:   #111827;
+      --text-secondary: #6b7280;
+      --text-muted:     rgba(255,255,255,0.82);
+
+      /* Surfaces */
+      --surface-0: #ffffff;
+      --surface-1: #f8fafb;
+      --surface-2: #f1f5f9;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -126,24 +144,24 @@
     #capture-ring {
       position: absolute;
       top: 12px; left: 12px;
-      width: 52px; height: 52px;
+      width: 76px; height: 76px;
       display: none; z-index: 3;
     }
-    #capture-ring svg { width: 52px; height: 52px; transform: rotate(-90deg); }
+    #capture-ring svg { width: 76px; height: 76px; transform: rotate(-90deg); }
     #capture-ring circle.track {
-      fill: none; stroke: rgba(255,255,255,0.15); stroke-width: 4;
+      fill: none; stroke: rgba(255,255,255,0.20); stroke-width: 5;
     }
     #capture-ring circle.fill {
-      fill: none; stroke: var(--brand); stroke-width: 4;
+      fill: none; stroke: var(--brand); stroke-width: 5;
       stroke-linecap: round;
-      stroke-dasharray: 138.2; /* 2π × r=22 */
-      stroke-dashoffset: 138.2;
+      stroke-dasharray: 201.1; /* 2π × r=32 */
+      stroke-dashoffset: 201.1;
       transition: stroke-dashoffset 0.1s linear;
     }
     #capture-ring .ring-label {
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
-      font-size: 10px; font-weight: 800; color: #fff;
+      font-size: 13px; font-weight: 800; color: #fff;
     }
 
     /* ── Capture flash ─────────────────────────────────────────────── */
@@ -184,8 +202,8 @@
     }
     .hud-stat { text-align: center; min-width: 72px; }
     .hud-val  { font-size: 28px; font-weight: 800; color: #fff; line-height: 1; letter-spacing: -0.5px; }
-    .hud-lbl  { font-size: 10px; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 0.07em; margin-top: 3px; }
-    .hud-target { font-size: 10px; color: var(--brand); font-weight: 700; margin-top: 1px; }
+    .hud-lbl  { font-size: 13px; color: rgba(255,255,255,0.82); text-transform: none; letter-spacing: 0; margin-top: 3px; font-weight: 600; }
+    .hud-target { font-size: 12px; color: var(--brand); font-weight: 700; margin-top: 1px; }
 
     #save-btn {
       min-height: 44px; padding: 0 26px;
@@ -218,9 +236,9 @@
     .nav-btn {
       flex: 1; display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      font-size: 9px; font-weight: 700;
+      font-size: 11px; font-weight: 700;
       color: #aaa; gap: 4px;
-      text-transform: uppercase; letter-spacing: 0.05em;
+      text-transform: none; letter-spacing: 0;
       cursor: pointer; user-select: none;
       border: none; background: none; padding: 0;
       position: relative;
@@ -305,6 +323,7 @@
       background: none; border: none;
       color: rgba(255,255,255,0.4); font-size: 14px;
       cursor: pointer; padding: 4px;
+      min-height: 44px;
     }
 
     /* ── Real-time feedback banner ──────────────────────────────────── */
@@ -316,7 +335,7 @@
       -webkit-backdrop-filter: blur(8px);
       backdrop-filter: blur(8px);
       color: #fff;
-      font-size: 18px; font-weight: 800;
+      font-size: 20px; font-weight: 800;
       padding: 10px 22px;
       border-radius: var(--radius-lg);
       white-space: nowrap;
@@ -340,6 +359,215 @@
       -webkit-backdrop-filter: blur(8px);
       backdrop-filter: blur(8px);
     }
+
+    /* ── Today tab ─────────────────────────────────────────────────── */
+    #today-tab { background: var(--surface-1); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+    .today-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 16px 8px;
+    }
+    .today-app-name { font-size: 18px; font-weight: 800; color: var(--text-primary); }
+    .today-streak {
+      font-size: 14px; font-weight: 800; color: #f59e0b;
+      background: #fffbeb; padding: 4px 12px; border-radius: 20px;
+    }
+    .today-phase-card {
+      margin: 0 16px 16px;
+      padding: 18px;
+      border-radius: 18px;
+      color: #fff;
+    }
+    .today-phase-badge {
+      font-size: 12px; font-weight: 800; opacity: 0.85;
+      text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 4px;
+    }
+    .today-phase-name { font-size: 22px; font-weight: 800; }
+    .today-phase-target { font-size: 14px; opacity: 0.85; margin-top: 4px; }
+
+    .today-side-picker {
+      display: flex; align-items: center; gap: 8px;
+      padding: 0 16px 14px;
+    }
+    .today-side-label { font-size: 14px; color: var(--text-secondary); font-weight: 600; }
+    .today-side-btn {
+      padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 700;
+      border: 2px solid #e5e7eb; background: #fff; color: #9ca3af; cursor: pointer;
+      min-height: 36px; transition: all 0.15s;
+    }
+    .today-side-btn.active {
+      border-color: #ef4444; background: #fef2f2; color: #ef4444;
+    }
+
+    .today-section-header {
+      font-size: 16px; font-weight: 800; color: var(--text-primary);
+      padding: 0 16px 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .today-ex-count {
+      font-size: 13px; font-weight: 700; color: var(--brand);
+      background: #e0f7fc; padding: 2px 8px; border-radius: 20px;
+    }
+
+    .today-ex-section { padding-top: 4px; }
+    .today-ex-scroll {
+      display: flex; gap: 12px;
+      padding: 0 16px 8px;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .today-ex-scroll::-webkit-scrollbar { display: none; }
+
+    .today-ex-card {
+      flex-shrink: 0; width: 140px;
+      background: #fff;
+      border-radius: 16px;
+      border: 2px solid #f3f4f6;
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+    .today-ex-card.done { border-color: #86efac; background: #f0fdf4; }
+    .today-ex-svg {
+      padding: 10px; background: #f9fafb;
+      display: flex; justify-content: center;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .today-ex-svg svg { width: 100px; height: 90px; }
+    .today-ex-name {
+      font-size: 14px; font-weight: 800; color: #111;
+      padding: 10px 10px 2px; line-height: 1.2;
+    }
+    .today-ex-sets {
+      font-size: 12px; color: #6b7280;
+      padding: 0 10px 8px;
+    }
+    .today-ex-check {
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 10px 12px;
+      height: 40px; width: 100%;
+      border-radius: 10px;
+      border: 2px solid #d1d5db;
+      background: #fff; color: #9ca3af;
+      font-size: 18px; font-weight: 800;
+      cursor: pointer;
+      transition: all 0.15s;
+      transform-origin: center;
+    }
+    .today-ex-check.checked {
+      border-color: #22c55e; background: #22c55e; color: #fff;
+      animation: checkPop 0.15s ease;
+    }
+    @keyframes checkPop {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.12); }
+      100% { transform: scale(1); }
+    }
+
+    .today-done-banner {
+      margin: 4px 16px 12px;
+      padding: 14px 16px;
+      background: #f0fdf4; color: #166534;
+      border-radius: 14px; border: 2px solid #86efac;
+      font-size: 16px; font-weight: 800;
+      text-align: center;
+    }
+
+    .today-spark-section { padding: 12px 0 0; }
+    .today-spark-row {
+      display: flex; gap: 8px; padding: 0 16px 8px;
+    }
+    .today-spark-item {
+      flex: 1; background: #fff; border-radius: 12px;
+      border: 1.5px solid #f3f4f6;
+      padding: 10px; text-align: center;
+    }
+    .today-spark-val { font-size: 20px; font-weight: 800; color: #111; }
+    .today-spark-date { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+
+    .today-goal-bar { padding: 4px 16px 16px; }
+    .today-goal-label {
+      display: flex; justify-content: space-between;
+      font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;
+    }
+    .today-goal-track {
+      height: 10px; background: #f3f4f6; border-radius: 5px; overflow: hidden;
+    }
+    .today-goal-fill { height: 100%; border-radius: 5px; transition: width 0.6s ease; }
+
+    .today-cta-wrap { padding: 8px 16px 24px; display: flex; flex-direction: column; gap: 8px; }
+    .today-cta-primary {
+      width: 100%; min-height: 56px;
+      border-radius: var(--radius-lg);
+      background: var(--brand); color: #fff;
+      border: none; font-size: 18px; font-weight: 800;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      box-shadow: 0 4px 16px rgba(0,180,216,0.35);
+    }
+    .today-cta-primary:active { opacity: 0.85; }
+    .today-cta-skip {
+      background: none; border: none;
+      color: var(--text-secondary); font-size: 15px; font-weight: 700;
+      cursor: pointer; padding: 8px; text-align: center;
+      min-height: 44px;
+    }
+
+    .today-empty {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 40px 24px 24px; text-align: center; gap: 10px;
+    }
+    .today-empty-icon { font-size: 52px; }
+    .today-empty-title { font-size: 22px; font-weight: 800; color: var(--text-primary); }
+    .today-empty-body { font-size: 16px; color: var(--text-secondary); line-height: 1.6; }
+
+    /* ── Celebration overlay ────────────────────────────────────────── */
+    #celebrate-overlay {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.88);
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 50; padding: 32px;
+      gap: 12px; text-align: center;
+    }
+    #celebrate-overlay.visible { display: flex; }
+    .cel-icon { font-size: 52px; animation: celBurst 0.4s ease; }
+    @keyframes celBurst {
+      0%   { transform: scale(0.3); opacity: 0; }
+      60%  { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+    .cel-angle {
+      font-size: 64px; font-weight: 800; color: #fff;
+      line-height: 1; letter-spacing: -2px;
+    }
+    .cel-title { font-size: 22px; font-weight: 800; color: #fff; }
+    .cel-bilateral {
+      background: rgba(255,255,255,0.10);
+      border: 1.5px solid rgba(255,255,255,0.20);
+      border-radius: 14px; padding: 14px 18px;
+      width: 100%;
+    }
+    .cel-bilateral-main { font-size: 18px; font-weight: 800; color: #fff; }
+    .cel-bilateral-sub { font-size: 14px; color: rgba(255,255,255,0.72); margin-top: 4px; }
+    .cel-improve { font-size: 16px; font-weight: 700; color: #4ade80; }
+    .cel-actions {
+      display: flex; gap: 10px; width: 100%; margin-top: 4px;
+    }
+    .cel-btn {
+      flex: 1; min-height: 52px; border-radius: var(--radius-lg);
+      font-size: 16px; font-weight: 800; cursor: pointer; border: none;
+    }
+    .cel-btn-save { background: var(--brand); color: #fff; }
+    .cel-btn-redo { background: rgba(255,255,255,0.12); color: #fff; border: 1.5px solid rgba(255,255,255,0.3); }
+    .cel-timer {
+      display: flex; gap: 4px;
+    }
+    .cel-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      transition: background 0.4s;
+    }
+    .cel-dot.active { background: var(--brand); }
 
     /* ── Portrait hint ─────────────────────────────────────────────── */
     @media (orientation: landscape) and (max-height: 480px) {
@@ -381,13 +609,39 @@
   <!-- Camera denied overlay -->
   <div id="ov-denied" class="overlay" style="display:none;">
     <div class="brand-logo" style="background:#ef4444;">⚠</div>
-    <p id="denied-msg">Camera access required</p>
-    <button id="retry-btn">Try again</button>
+    <p id="denied-msg">카메라 접근이 필요합니다</p>
+    <p id="denied-tip" style="font-size:13px;color:rgba(255,255,255,0.7);max-width:260px;display:none;">
+      iPhone: 설정 → ShoulderROM → 카메라 허용<br>
+      Android: 설정 → 앱 → 카메라 권한 허용
+    </p>
+    <button id="retry-btn">다시 시도하기</button>
   </div>
 
   <!-- No-pose overlay -->
   <div id="ov-npose" class="overlay" style="display:none;">
-    <p style="font-size:14px;">Step back so your full body is visible</p>
+    <p style="font-size:16px;">전신이 화면 안에 보이도록 뒤로 물러서세요</p>
+  </div>
+
+  <!-- Celebration overlay -->
+  <div id="celebrate-overlay">
+    <div class="cel-icon">🎉</div>
+    <div class="cel-angle" id="cel-angle">87°</div>
+    <div class="cel-title">최대 각도 달성!</div>
+    <div class="cel-bilateral">
+      <div class="cel-bilateral-main" id="cel-bilateral-main">아픈 팔 87° ←→ 건강한 팔 92°</div>
+      <div class="cel-bilateral-sub" id="cel-bilateral-sub">차이: 5° (거의 회복됐어요!)</div>
+    </div>
+    <div class="cel-improve" id="cel-improve"></div>
+    <div class="cel-actions">
+      <button class="cel-btn cel-btn-redo" id="cel-redo">다시 측정</button>
+      <button class="cel-btn cel-btn-save" id="cel-save">기록 저장</button>
+    </div>
+    <div class="cel-timer" id="cel-timer">
+      <div class="cel-dot active" id="cel-dot-0"></div>
+      <div class="cel-dot" id="cel-dot-1"></div>
+      <div class="cel-dot" id="cel-dot-2"></div>
+      <div class="cel-dot" id="cel-dot-3"></div>
+    </div>
   </div>
 
   <!-- Real-time feedback banner -->
@@ -396,13 +650,13 @@
   <!-- Help button (top-left) -->
   <button id="help-btn" aria-label="사용 방법">?</button>
 
-  <!-- Auto-capture ring (repositioned to avoid overlap with help btn) -->
+  <!-- Auto-capture ring (76px, top-left below help btn) -->
   <div id="capture-ring" style="top:62px;left:12px;">
-    <svg viewBox="0 0 52 52">
-      <circle class="track" cx="26" cy="26" r="22"/>
-      <circle class="fill" id="ring-fill" cx="26" cy="26" r="22"/>
+    <svg viewBox="0 0 76 76">
+      <circle class="track" cx="38" cy="38" r="32"/>
+      <circle class="fill" id="ring-fill" cx="38" cy="38" r="32"/>
     </svg>
-    <div class="ring-label" id="ring-label">MAX</div>
+    <div class="ring-label" id="ring-label">최대!</div>
   </div>
 
   <!-- ── Onboarding overlay ─────────────────────────────────────── -->
@@ -496,14 +750,6 @@
   </div>
   <!-- ── End onboarding ─────────────────────────────────────────── -->
 
-  <!-- Auto-capture ring (repositioned above) -->
-    <svg viewBox="0 0 52 52">
-      <circle class="track" cx="26" cy="26" r="22"/>
-      <circle class="fill" id="ring-fill" cx="26" cy="26" r="22"/>
-    </svg>
-    <div class="ring-label" id="ring-label">MAX</div>
-  </div>
-
   <!-- Capture flash effect -->
   <div id="capture-flash"></div>
 
@@ -515,24 +761,27 @@
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
       <path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/>
     </svg>
-    Swap sides
+    아픈 쪽 변경
   </button>
 
   <!-- HUD -->
   <div id="hud">
     <div class="hud-stat">
       <div class="hud-val" id="hud-l">—°</div>
-      <div class="hud-lbl" id="lbl-l">Left</div>
+      <div class="hud-lbl" id="lbl-l">왼쪽</div>
       <div class="hud-target" id="tgt-l"></div>
     </div>
-    <button id="save-btn" disabled>Save</button>
+    <button id="save-btn" disabled>저장</button>
     <div class="hud-stat">
       <div class="hud-val" id="hud-r">—°</div>
-      <div class="hud-lbl" id="lbl-r">Right</div>
+      <div class="hud-lbl" id="lbl-r">오른쪽</div>
       <div class="hud-target" id="tgt-r"></div>
     </div>
   </div>
 </div>
+
+<!-- Today tab (home screen) -->
+<div id="today-tab" class="tab" style="display:none;"></div>
 
 <!-- Progress tab -->
 <div id="progress-tab" class="tab" style="display:none;"></div>
@@ -543,16 +792,27 @@
 <!-- Guide tab -->
 <div id="guide-tab" class="tab" style="display:none;"></div>
 
-<!-- Bottom nav — SVG icons, no emoji -->
+<!-- Bottom nav: 오늘 / 측정 / 운동 / 공유 -->
 <nav id="nav">
-  <button class="nav-btn active" data-tab="camera-tab">
+  <button class="nav-btn active" data-tab="today-tab">
+    <span class="nav-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/>
+        <line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+    </span>
+    오늘
+  </button>
+  <button class="nav-btn" data-tab="camera-tab">
     <span class="nav-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
         <circle cx="12" cy="13" r="4"/>
       </svg>
     </span>
-    Measure
+    측정
   </button>
   <button class="nav-btn" data-tab="progress-tab">
     <span class="nav-icon">
@@ -560,16 +820,16 @@
         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
       </svg>
     </span>
-    Progress
+    기록
   </button>
   <button class="nav-btn" data-tab="guide-tab">
     <span class="nav-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M12 8v4l3 3"/>
+        <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
       </svg>
     </span>
-    Guide
+    운동
   </button>
   <button class="nav-btn" data-tab="share-tab">
     <span class="nav-icon">
@@ -579,17 +839,18 @@
         <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
       </svg>
     </span>
-    Share
+    공유
   </button>
 </nav>
 
 <script type="module">
-  import { initPose }                    from './pose.js';
-  import { initStorage, saveSession }    from './storage.js';
-  import { getAffectedSide, toggleSwap } from './state.js';
-  import { renderProgress }              from './progress.js';
-  import { renderShare }                 from './share.js';
+  import { initPose }                           from './pose.js';
+  import { initStorage, saveSession }           from './storage.js';
+  import { getAffectedSide, setAffectedSide, toggleSwap } from './state.js';
+  import { renderProgress }                     from './progress.js';
+  import { renderShare }                        from './share.js';
   import { renderGuide, getCurrentPhase, getTargetAngleForPhase } from './guide.js';
+  import { renderToday }                        from './today.js';
 
   // ── WebSpeech TTS ──────────────────────────────────────────────────────
   const TTS_ENABLED = 'speechSynthesis' in window;
@@ -660,9 +921,15 @@
   // ── Guide: get target angle for current phase ────────────────────────
   const targetAngle = getTargetAngleForPhase(getCurrentPhase());
 
-  // Show target in HUD
-  document.getElementById('tgt-l').textContent = `Target ${targetAngle}°`;
-  document.getElementById('tgt-r').textContent = `Target ${targetAngle}°`;
+  // Show target in HUD (Korean)
+  document.getElementById('tgt-l').textContent = `목표 ${targetAngle}°`;
+  document.getElementById('tgt-r').textContent = `목표 ${targetAngle}°`;
+
+  // Set initial HUD side labels based on persisted affected side
+  _updateHudSideLabels(getAffectedSide());
+
+  // Start on Today tab (home screen)
+  showTab('today-tab');
 
   // ── Shared state ─────────────────────────────────────────────────────
   let leftAngle  = null;
@@ -685,7 +952,7 @@
   const $flash      = document.getElementById('capture-flash');
   const $toast      = document.getElementById('toast');
 
-  const RING_CIRCUMFERENCE = 138.2; // 2π × r=22
+  const RING_CIRCUMFERENCE = 201.1; // 2π × r=32
 
   function showToast(msg, durationMs = 2500) {
     $toast.textContent = msg;
@@ -698,8 +965,15 @@
     setTimeout(() => $flash.classList.remove('flash'), 180);
   }
 
+  function resetCaptureRing() {
+    $ring.style.display = 'none';
+    $ringFill.style.strokeDashoffset = RING_CIRCUMFERENCE;
+    $ringLabel.textContent = '최대!';
+    sessionPeakL = 0; sessionPeakR = 0;
+    peakHoldStartL = null; peakHoldStartR = null;
+  }
+
   function updateCaptureRing(progress) {
-    // progress: 0–1
     if (progress <= 0) {
       $ring.style.display = 'none';
       return;
@@ -707,8 +981,67 @@
     $ring.style.display = 'block';
     const offset = RING_CIRCUMFERENCE * (1 - progress);
     $ringFill.style.strokeDashoffset = offset;
-    $ringLabel.textContent = progress >= 1 ? '✓' : 'MAX';
+    $ringLabel.textContent = progress >= 1 ? '✓' : '최대!';
   }
+
+  // ── Celebration overlay ──────────────────────────────────────────────
+  const $celebrate    = document.getElementById('celebrate-overlay');
+  const $celAngle     = document.getElementById('cel-angle');
+  const $celBiMain    = document.getElementById('cel-bilateral-main');
+  const $celBiSub     = document.getElementById('cel-bilateral-sub');
+  const $celImprove   = document.getElementById('cel-improve');
+  let _celebrateTimer = null;
+
+  function showCelebration(capturedL, capturedR, savedOk) {
+    if (!savedOk) return;
+    const affected   = getAffectedSide();
+    const affVal     = affected === 'left' ? capturedL : capturedR;
+    const refVal     = affected === 'left' ? capturedR : capturedL;
+    const affLabel   = affected === 'left' ? '왼쪽' : '오른쪽';
+    const refLabel   = affected === 'left' ? '오른쪽' : '왼쪽';
+    const deficit    = Math.abs(affVal - refVal);
+
+    $celAngle.textContent = affVal + '°';
+    $celBiMain.textContent = `${affLabel} ${affVal}° ←→ ${refLabel} ${refVal}°`;
+
+    if (deficit <= 10) {
+      $celBiSub.textContent = `차이: ${deficit}° (거의 회복됐어요!)`;
+    } else if (deficit <= 25) {
+      $celBiSub.textContent = `차이: ${deficit}° (좋은 진행 중이에요!)`;
+    } else {
+      $celBiSub.textContent = `차이: ${deficit}° (계속 하시면 줄어들어요)`;
+    }
+
+    $celebrate.classList.add('visible');
+
+    // Auto-dismiss dots (4s)
+    let dotIdx = 0;
+    const dots = document.querySelectorAll('.cel-dot');
+    _celebrateTimer = setInterval(() => {
+      dotIdx++;
+      dots.forEach((d, i) => d.classList.toggle('active', i === dotIdx % 4));
+      if (dotIdx >= 4) {
+        clearInterval(_celebrateTimer);
+        $celebrate.classList.remove('visible');
+        // Refresh today tab if it's visible
+        const todayEl = document.getElementById('today-tab');
+        if (todayEl && todayEl.style.display !== 'none') {
+          renderToday(todayEl, { onStartMeasure: () => showTab('camera-tab') });
+        }
+      }
+    }, 1000);
+  }
+
+  function hideCelebration() {
+    clearInterval(_celebrateTimer);
+    $celebrate.classList.remove('visible');
+  }
+
+  document.getElementById('cel-redo').addEventListener('click', hideCelebration);
+  document.getElementById('cel-save').addEventListener('click', () => {
+    hideCelebration();
+    showTab('progress-tab');
+  });
 
   // ── Real-time feedback ───────────────────────────────────────────────
   const $rtFeedback = document.getElementById('rt-feedback');
@@ -779,11 +1112,15 @@
         updateCaptureRing(0);
         triggerFlash();
 
-        const ok = saveSession(leftAngle ?? 0, rightAngle ?? 0);
+        const captL = leftAngle ?? 0;
+        const captR = rightAngle ?? 0;
+        const ok    = saveSession(captL, captR);
         if (ok) {
-          showToast(`잘 하셨어요! ${angle}° 저장됐어요`);
           speak(`잘 하셨어요! ${angle}도 저장됐습니다`);
-          _lastFeedbackKey = ''; // reset feedback so goal message shows again next rep
+          _lastFeedbackKey = '';
+          showCelebration(captL, captR, true);
+        } else {
+          showToast('저장 실패 — 다시 시도해주세요');
         }
       }
       return; // ring already updated
@@ -797,12 +1134,17 @@
 
   // ── Tab navigation ──────────────────────────────────────────────────
   function showTab(name) {
+    // Cancel auto-capture ring when leaving camera tab
+    if (name !== 'camera-tab') {
+      resetCaptureRing();
+    }
     document.querySelectorAll('.tab').forEach(el => {
       el.style.display = el.id === name ? '' : 'none';
     });
     document.querySelectorAll('.nav-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.tab === name);
     });
+    if (name === 'today-tab')    renderToday(document.getElementById('today-tab'), { onStartMeasure: () => showTab('camera-tab') });
     if (name === 'progress-tab') renderProgress(document.getElementById('progress-tab'));
     if (name === 'share-tab')    renderShare(document.getElementById('share-tab'), null);
     if (name === 'guide-tab')    renderGuide(document.getElementById('guide-tab'));
@@ -812,11 +1154,23 @@
     btn.addEventListener('click', () => showTab(btn.dataset.tab));
   });
 
+  // Listen for affected side changes from Today tab picker
+  document.addEventListener('affectedSideChanged', (e) => {
+    const side = e.detail.side;
+    _updateHudSideLabels(side);
+  });
+
+  function _updateHudSideLabels(side) {
+    const lblL = document.getElementById('lbl-l');
+    const lblR = document.getElementById('lbl-r');
+    lblL.textContent = side === 'left'  ? '왼쪽 (아픈 쪽)' : '왼쪽';
+    lblR.textContent = side === 'right' ? '오른쪽 (아픈 쪽)' : '오른쪽';
+  }
+
   // ── Swap button ──────────────────────────────────────────────────────
   document.getElementById('swap-btn').addEventListener('click', () => {
     const side = toggleSwap();
-    document.getElementById('lbl-l').textContent = side === 'left'  ? 'Left (Affected)'  : 'Left';
-    document.getElementById('lbl-r').textContent = side === 'right' ? 'Right (Affected)'  : 'Right';
+    _updateHudSideLabels(side);
   });
 
   // ── Save button ──────────────────────────────────────────────────────
@@ -865,10 +1219,14 @@
       });
     } catch (err) {
       $loading.style.display = 'none';
-      document.getElementById('denied-msg').textContent =
-        err.name === 'NotAllowedError'
-          ? 'Camera access denied — please allow in browser settings.'
-          : 'Camera access required to measure range of motion.';
+      const $deniedMsg = document.getElementById('denied-msg');
+      const $deniedTip = document.getElementById('denied-tip');
+      if (err.name === 'NotAllowedError') {
+        $deniedMsg.textContent = '카메라 접근이 거부됐습니다';
+        $deniedTip.style.display = '';
+      } else {
+        $deniedMsg.textContent = '카메라 접근이 필요합니다';
+      }
       $denied.style.display = '';
       return;
     }
@@ -926,6 +1284,18 @@
     }
   }
 
+  // Camera starts lazily on first visit to 측정 tab
+  let _cameraStarted = false;
+  const _origShowTab = showTab;
+  // Patch showTab to lazy-start camera when 측정 tab is first shown
+  // (we redefine showTab to add this hook)
+  const _showTabOrig = window._showTab = showTab;
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    // already has click listener — don't double-add
+  });
+
+  // Immediately start camera so it's ready (user lands on Today tab,
+  // camera loads in background so measurement is instant when they switch)
   startCamera();
 </script>
 </body>

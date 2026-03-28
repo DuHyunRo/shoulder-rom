@@ -1,109 +1,171 @@
 /**
- * Progress tab — renders the session history chart and table.
+ * Progress tab — "내 기록" session history with improvement card and goal bar.
  *
  * Vanilla Canvas 2D only — no Chart.js, no CDN dependency.
  * Conference WiFi is unreliable; every CDN call is a demo risk.
- *
- * Chart layout (canvas 320×160, all in px):
- *   PAD = { top:10, right:16, bottom:24, left:32 }
- *   Y axis: 0° at bottom, 180° at top
- *   Target line at TARGET_ANGLE° = (TARGET/180) of chart height
  */
 
 import { getSessions } from './storage.js';
+import { getCurrentPhase, getPhaseColor, getTargetAngleForPhase } from './guide.js';
 
-const TARGET = 120; // frozen shoulder protocol target (°)
-const PAD    = { top: 10, right: 16, bottom: 24, left: 32 };
+const PAD = { top: 12, right: 16, bottom: 28, left: 36 };
 
 /** Re-render the entire progress tab into `container`. */
 export function renderProgress(container) {
   const sessions = getSessions();
   container.innerHTML = '';
+  container.style.paddingBottom = '80px';
 
+  // ── Empty state ──────────────────────────────────────────────────
   if (sessions.length === 0) {
     container.innerHTML = `
-      <p style="color:#888;text-align:center;padding:48px 24px;font-size:14px;">
-        No sessions yet.<br>Save a measurement to see your progress.
-      </p>`;
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+                  min-height:60vh;padding:48px 24px;text-align:center;gap:12px;">
+        <div style="font-size:48px;">📊</div>
+        <div style="font-size:20px;font-weight:800;color:#111;">아직 기록이 없어요</div>
+        <div style="font-size:16px;color:#777;line-height:1.6;">첫 측정을 완료하면<br>여기에 기록이 나타납니다.</div>
+      </div>`;
     return;
   }
 
-  const latest     = sessions[sessions.length - 1];
-  const affSide    = latest.affectedSide;
-  const sideLabel  = affSide === 'right' ? 'Right' : 'Left';
+  const phase     = getCurrentPhase();
+  const phaseColor = getPhaseColor(phase);
+  const target    = getTargetAngleForPhase(phase);
+  const latest    = sessions[sessions.length - 1];
+  const affSide   = latest.affectedSide;
+  const latestVal = latest[affSide + 'Max'];
+  const sideLabel = affSide === 'right' ? '오른쪽' : '왼쪽';
 
-  // Title
-  container.appendChild(el('div', {
-    style: 'font-size:15px;font-weight:700;padding:16px 16px 4px;',
-    textContent: `${sideLabel} Shoulder — Flexion ROM`,
-  }));
-  container.appendChild(el('div', {
-    style: 'font-size:11px;color:#888;padding:0 16px 12px;',
-    textContent: `${sessions.length} session${sessions.length > 1 ? 's' : ''} · Target: ${TARGET}°`,
-  }));
+  // ── Page header ──────────────────────────────────────────────────
+  const hdr = el('div', { style: 'padding:20px 16px 4px;' });
+  hdr.innerHTML = `
+    <div style="font-size:22px;font-weight:800;color:#111;">내 기록</div>
+    <div style="font-size:14px;color:#888;margin-top:2px;">${sideLabel} 어깨 굴곡 ROM · ${sessions.length}회 측정</div>
+  `;
+  container.appendChild(hdr);
 
-  // Chart
-  const chartWrap = el('div', { style: 'padding:0 16px;' });
-  const chartCanvas = el('canvas', {
-    style: 'width:100%;height:auto;border:1.5px solid #e5e5e5;border-radius:8px;display:block;',
+  // ── Week-over-week improvement card ──────────────────────────────
+  const realSessions = sessions.filter(s => !s._seed);
+  if (realSessions.length >= 2) {
+    const prev    = realSessions[realSessions.length - 2];
+    const prevVal = prev[prev.affectedSide + 'Max'];
+    const diff    = latestVal - prevVal;
+    const isUp    = diff >= 0;
+
+    const improvCard = el('div', {
+      style: `
+        margin:8px 16px 0;
+        padding:16px;
+        border-radius:16px;
+        background:${isUp ? '#f0fdf4' : '#fff1f2'};
+        border:2px solid ${isUp ? '#86efac' : '#fca5a5'};
+        display:flex;align-items:center;gap:14px;
+      `,
+    });
+    improvCard.innerHTML = `
+      <div style="font-size:36px;line-height:1;">${isUp ? '📈' : '📉'}</div>
+      <div>
+        <div style="font-size:20px;font-weight:800;color:${isUp ? '#16a34a' : '#dc2626'};">
+          ${isUp ? '+' : ''}${diff}° ${isUp ? '향상!' : '감소'}
+        </div>
+        <div style="font-size:14px;color:#555;margin-top:2px;">
+          ${isUp ? '잘하고 계세요 — 계속 이대로!' : '괜찮아요, 오늘 다시 해봐요'}
+        </div>
+      </div>
+    `;
+    container.appendChild(improvCard);
+  }
+
+  // ── Goal progress bar ─────────────────────────────────────────────
+  const pct    = Math.min(latestVal / target, 1);
+  const goalSection = el('div', { style: 'padding:16px 16px 4px;' });
+  goalSection.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+      <div style="font-size:16px;font-weight:700;color:#111;">${phase}단계 목표까지</div>
+      <div style="font-size:20px;font-weight:800;color:${phaseColor};">${latestVal}° / ${target}°</div>
+    </div>
+    <div style="height:12px;background:#f0f0f0;border-radius:6px;overflow:hidden;">
+      <div style="
+        width:${Math.round(pct * 100)}%;height:100%;
+        background:${phaseColor};border-radius:6px;
+        transition:width 0.6s ease;
+      "></div>
+    </div>
+    <div style="font-size:13px;color:#888;margin-top:6px;">${Math.round(pct * 100)}% 달성</div>
+  `;
+  container.appendChild(goalSection);
+
+  // ── Chart ─────────────────────────────────────────────────────────
+  const chartWrap = el('div', { style: 'padding:8px 16px 0;' });
+  const canvas = el('canvas', {
+    style: 'width:100%;height:auto;border:1.5px solid #ebebeb;border-radius:12px;display:block;',
   });
-  chartCanvas.width  = 320;
-  chartCanvas.height = 160;
-  chartWrap.appendChild(chartCanvas);
+  canvas.width  = 320;
+  canvas.height = 160;
+  chartWrap.appendChild(canvas);
   container.appendChild(chartWrap);
-  drawChart(chartCanvas, sessions);
+  drawChart(canvas, sessions, target, phaseColor);
 
-  // Legend
-  const legend = el('div', { style: 'display:flex;gap:16px;padding:8px 16px;' });
-  legend.innerHTML = `
-    <span style="font-size:10px;color:#555;display:flex;align-items:center;gap:4px;">
-      <span style="width:14px;height:3px;background:#3b82f6;display:inline-block;border-radius:2px;"></span>
-      Affected ROM
-    </span>
-    <span style="font-size:10px;color:#555;display:flex;align-items:center;gap:4px;">
-      <span style="width:14px;height:0;border-top:2px dashed #ef4444;display:inline-block;"></span>
-      Target ${TARGET}°
-    </span>`;
-  container.appendChild(legend);
+  // ── Session cards ─────────────────────────────────────────────────
+  const cardsHdr = el('div', {
+    style: 'font-size:16px;font-weight:700;color:#111;padding:20px 16px 8px;',
+  });
+  cardsHdr.textContent = '측정 기록';
+  container.appendChild(cardsHdr);
 
-  // Session rows
-  const table = el('div', { style: 'padding:0 16px;margin-top:4px;' });
-  sessions.forEach((s, i) => {
+  const cardList = el('div', { style: 'padding:0 16px;display:flex;flex-direction:column;gap:10px;' });
+
+  // Show newest first
+  [...sessions].reverse().forEach((s, i) => {
     const val     = s[s.affectedSide + 'Max'];
-    const prevVal = i > 0 ? sessions[i - 1][sessions[i - 1].affectedSide + 'Max'] : null;
+    const isLatest = i === 0;
+    const dateStr = new Date(s.timestamp).toLocaleDateString('ko-KR', {
+      month: 'long', day: 'numeric',
+    });
+    const timeStr = new Date(s.timestamp).toLocaleTimeString('ko-KR', {
+      hour: '2-digit', minute: '2-digit',
+    });
+    const prevS   = i < sessions.length - 1 ? [...sessions].reverse()[i + 1] : null;
+    const prevVal = prevS ? prevS[prevS.affectedSide + 'Max'] : null;
     const delta   = prevVal !== null ? val - prevVal : null;
 
-    const row = el('div', {
-      style: `display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:12px;${i === sessions.length - 1 ? 'font-weight:700;' : ''}`,
+    const card = el('div', {
+      style: `
+        background:#fff;border-radius:14px;
+        border:${isLatest ? `2px solid ${phaseColor}` : '1.5px solid #ebebeb'};
+        padding:14px 16px;
+        display:flex;align-items:center;gap:12px;
+      `,
     });
-    row.innerHTML = `
-      <span style="color:#555;">${s.label}</span>
-      <span>${val}°</span>
-      <span style="color:${delta === null ? '#999' : delta >= 0 ? '#16a34a' : '#dc2626'};">
-        ${delta === null ? '—' : (delta >= 0 ? '+' : '') + delta + '°'}
-      </span>`;
-    table.appendChild(row);
+    card.innerHTML = `
+      <div style="
+        width:52px;height:52px;border-radius:50%;
+        background:${isLatest ? phaseColor : '#f3f4f6'};
+        display:flex;align-items:center;justify-content:center;
+        font-size:18px;font-weight:800;
+        color:${isLatest ? '#fff' : '#374151'};
+        flex-shrink:0;line-height:1;
+      ">${val}°</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:16px;font-weight:${isLatest ? '800' : '600'};color:#111;">${dateStr} ${timeStr}</div>
+        <div style="font-size:13px;color:#888;margin-top:2px;">${s.label} · ${s.affectedSide === 'right' ? '오른쪽' : '왼쪽'} 어깨</div>
+      </div>
+      ${delta !== null ? `
+        <div style="
+          font-size:16px;font-weight:800;
+          color:${delta >= 0 ? '#16a34a' : '#dc2626'};
+          flex-shrink:0;
+        ">${delta >= 0 ? '+' : ''}${delta}°</div>
+      ` : ''}
+    `;
+    cardList.appendChild(card);
   });
-  container.appendChild(table);
-
-  // Progress bar
-  const latestVal = latest[latest.affectedSide + 'Max'];
-  const pct       = Math.min(latestVal / TARGET, 1);
-  const barWrap   = el('div', { style: 'padding:12px 16px 24px;' });
-  barWrap.innerHTML = `
-    <div style="display:flex;justify-content:space-between;font-size:10px;color:#888;margin-bottom:4px;">
-      <span>Progress to target</span>
-      <span>${latestVal}/${TARGET}° (${Math.round(pct * 100)}%)</span>
-    </div>
-    <div style="height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;">
-      <div style="width:${pct * 100}%;height:100%;background:#3b82f6;border-radius:3px;"></div>
-    </div>`;
-  container.appendChild(barWrap);
+  container.appendChild(cardList);
 }
 
-// ── Chart drawing ─────────────────────────────────────────────────────
+// ── Chart drawing ──────────────────────────────────────────────────────
 
-function drawChart(canvas, sessions) {
+function drawChart(canvas, sessions, target, color) {
   const ctx = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
   const cW = W - PAD.left - PAD.right;
@@ -112,24 +174,24 @@ function drawChart(canvas, sessions) {
   ctx.clearRect(0, 0, W, H);
 
   // Grid + Y axis labels
-  ctx.font      = '9px system-ui';
-  ctx.fillStyle = '#aaa';
+  ctx.font      = '10px system-ui';
+  ctx.fillStyle = '#bbb';
   ctx.textAlign = 'right';
   for (const deg of [0, 60, 120, 180]) {
     const y = PAD.top + cH - (deg / 180) * cH;
-    ctx.strokeStyle = '#ebebeb';
+    ctx.strokeStyle = '#f0f0f0';
     ctx.lineWidth   = 1;
     ctx.setLineDash([]);
     ctx.beginPath();
     ctx.moveTo(PAD.left, y);
     ctx.lineTo(PAD.left + cW, y);
     ctx.stroke();
-    ctx.fillText(`${deg}°`, PAD.left - 4, y + 3);
+    ctx.fillText(`${deg}°`, PAD.left - 4, y + 4);
   }
 
-  // Target line (dashed red)
-  const targetY = PAD.top + cH - (TARGET / 180) * cH;
-  ctx.strokeStyle = '#ef4444';
+  // Target line (dashed, phase color)
+  const targetY = PAD.top + cH - (target / 180) * cH;
+  ctx.strokeStyle = color;
   ctx.lineWidth   = 1.5;
   ctx.setLineDash([4, 4]);
   ctx.beginPath();
@@ -138,8 +200,8 @@ function drawChart(canvas, sessions) {
   ctx.stroke();
   ctx.setLineDash([]);
 
-  // Compute data points
-  const n  = sessions.length;
+  // Data points
+  const n   = sessions.length;
   const pts = sessions.map((s, i) => {
     const val = s[s.affectedSide + 'Max'];
     return {
@@ -159,11 +221,11 @@ function drawChart(canvas, sessions) {
   ctx.lineTo(pts[pts.length - 1].x, PAD.top + cH);
   ctx.lineTo(pts[0].x, PAD.top + cH);
   ctx.closePath();
-  ctx.fillStyle = 'rgba(59,130,246,0.08)';
+  ctx.fillStyle = `${color}18`;
   ctx.fill();
 
   // Data line
-  ctx.strokeStyle = '#3b82f6';
+  ctx.strokeStyle = color;
   ctx.lineWidth   = 2.5;
   ctx.lineJoin    = 'round';
   ctx.beginPath();
@@ -172,13 +234,13 @@ function drawChart(canvas, sessions) {
   ctx.stroke();
 
   // Dots + X labels
-  ctx.font      = '9px system-ui';
+  ctx.font      = '10px system-ui';
   ctx.textAlign = 'center';
   pts.forEach((p, i) => {
     const isLast = i === pts.length - 1;
     ctx.beginPath();
     ctx.arc(p.x, p.y, isLast ? 5 : 4, 0, Math.PI * 2);
-    ctx.fillStyle = '#3b82f6';
+    ctx.fillStyle = color;
     ctx.fill();
     if (isLast) {
       ctx.strokeStyle = '#fff';
@@ -186,11 +248,11 @@ function drawChart(canvas, sessions) {
       ctx.stroke();
     }
     ctx.fillStyle = '#aaa';
-    ctx.fillText(p.label, p.x, H - 6);
+    ctx.fillText(p.label, p.x, H - 8);
   });
 }
 
-// ── Tiny helper ───────────────────────────────────────────────────────
+// ── Tiny helper ────────────────────────────────────────────────────────
 
 function el(tag, props = {}) {
   const e = document.createElement(tag);

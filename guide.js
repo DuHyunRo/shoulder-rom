@@ -400,6 +400,17 @@ export function getTargetAngleForPhase(phase) {
   return p ? p.targetAngle : 90;
 }
 
+/** Returns the brand color string for a given phase number (1-4). */
+export function getPhaseColor(phase) {
+  const p = PROGRAM.find(p => p.phase === phase);
+  return p ? p.color : '#00B4D8';
+}
+
+/** Returns the full program data (read-only reference). */
+export function getProgram() {
+  return PROGRAM;
+}
+
 export function getCurrentPhase() {
   try {
     const sessions = JSON.parse(localStorage.getItem('shoulderrom_sessions') || '[]');
