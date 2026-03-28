@@ -928,9 +928,6 @@
   // Set initial HUD side labels based on persisted affected side
   _updateHudSideLabels(getAffectedSide());
 
-  // Start on Today tab (home screen)
-  showTab('today-tab');
-
   // ── Shared state ─────────────────────────────────────────────────────
   let leftAngle  = null;
   let rightAngle = null;
@@ -953,6 +950,9 @@
   const $toast      = document.getElementById('toast');
 
   const RING_CIRCUMFERENCE = 201.1; // 2π × r=32
+
+  // Start on Today tab (home screen) — must be after all const/$ring declarations
+  showTab('today-tab');
 
   function showToast(msg, durationMs = 2500) {
     $toast.textContent = msg;
