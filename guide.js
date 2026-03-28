@@ -7,256 +7,361 @@
  * Target angle is exported so the camera HUD and Measure screen can display it.
  */
 
-// ── SVG stick-figure illustrations ─────────────────────────────────────────
-// Consistent style: viewBox 0 0 110 100, #333 body, accent red = affected arm
-// Stroke-based, no fills for clarity at small sizes.
+// ── Exercise Illustrations ──────────────────────────────────────────────────
+// Medical PT-style diagrams: clean body, clear movement arrows, phase accent.
+// ViewBox 110×100. Red (#ef4444) = affected arm. Gray (#374151) = body/reference.
+// No text labels — exercise name is shown in the card header above.
 
 const SVG = {
 
+  // Phase 1 — 1: Pendulum (pendulum swing, leaning on table)
   pendulum: `<svg viewBox="0 0 110 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- Table surface -->
-    <rect x="4" y="40" width="36" height="5" rx="2" fill="#d1d5db"/>
-    <rect x="8" y="45" width="5" height="22" fill="#d1d5db"/>
+    <rect width="110" height="100" rx="8" fill="#fff5f5"/>
+    <!-- Table top + leg -->
+    <rect x="2" y="38" width="40" height="6" rx="3" fill="#d1d5db"/>
+    <rect x="6" y="44" width="6" height="26" rx="2" fill="#d1d5db"/>
     <!-- Head -->
-    <circle cx="58" cy="11" r="8" stroke="#374151" stroke-width="2.5" fill="white"/>
-    <!-- Torso (leaning ~45°) -->
-    <line x1="58" y1="19" x2="36" y2="40" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Hand on table -->
-    <line x1="36" y1="40" x2="18" y2="40" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Affected arm hanging -->
-    <line x1="36" y1="40" x2="60" y2="72" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
-    <!-- Circular arrow showing swing -->
-    <path d="M60,72 A14,14,0,0,1,82,64" stroke="#ef4444" stroke-width="2" fill="none" stroke-linecap="round" stroke-dasharray="3,2"/>
-    <polygon points="80,60 82,64 78,66" fill="#ef4444"/>
-    <!-- Legs -->
-    <line x1="36" y1="40" x2="26" y2="70" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <line x1="36" y1="40" x2="44" y2="70" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Label -->
-    <text x="55" y="90" font-size="9" fill="#ef4444" font-weight="700" font-family="system-ui">중력으로 흔들기</text>
+    <circle cx="60" cy="10" r="9" fill="#f9fafb" stroke="#374151" stroke-width="2.2"/>
+    <circle cx="57" cy="9" r="1.2" fill="#374151"/>
+    <circle cx="63" cy="9" r="1.2" fill="#374151"/>
+    <!-- Torso leaning ~40° -->
+    <line x1="60" y1="19" x2="40" y2="38" stroke="#374151" stroke-width="3" stroke-linecap="round"/>
+    <!-- Support hand on table -->
+    <line x1="40" y1="38" x2="22" y2="38" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Leg (bent, standing) -->
+    <line x1="52" y1="32" x2="40" y2="62" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="52" y1="32" x2="56" y2="62" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Affected arm hanging down (gravity) -->
+    <line x1="40" y1="38" x2="58" y2="74" stroke="#ef4444" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- Weight at hand (light dumbbell hint) -->
+    <ellipse cx="58" cy="78" rx="5" ry="4" fill="#ef4444" opacity="0.25" stroke="#ef4444" stroke-width="1.5"/>
+    <!-- Pendulum arc arrows (left + right swing) -->
+    <path d="M44,72 A20,20,0,0,0,72,72" stroke="#ef4444" stroke-width="2" fill="none" stroke-dasharray="4,3" stroke-linecap="round"/>
+    <polygon points="44,68 41,73 47,74" fill="#ef4444"/>
+    <polygon points="72,68 69,74 75,73" fill="#ef4444"/>
+    <!-- ↕ gravity label arrow -->
+    <line x1="90" y1="38" x2="90" y2="58" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="2,2"/>
+    <polygon points="90,62 87,55 93,55" fill="#ef4444"/>
+    <text x="84" y="35" font-size="8" fill="#ef4444" font-family="system-ui" font-weight="700">중력</text>
   </svg>`,
 
+  // Phase 1 — 2: Stick/Wand elevation (good arm pushes affected arm up)
   stickElevation: `<svg viewBox="0 0 110 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="110" height="100" rx="8" fill="#fff5f5"/>
     <!-- Head -->
-    <circle cx="55" cy="11" r="8" stroke="#374151" stroke-width="2.5" fill="white"/>
+    <circle cx="55" cy="10" r="9" fill="#f9fafb" stroke="#374151" stroke-width="2.2"/>
+    <circle cx="52" cy="9" r="1.2" fill="#374151"/>
+    <circle cx="58" cy="9" r="1.2" fill="#374151"/>
     <!-- Torso -->
-    <line x1="55" y1="19" x2="55" y2="58" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Legs -->
-    <line x1="55" y1="58" x2="44" y2="82" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <line x1="55" y1="58" x2="66" y2="82" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Good arm (holding stick, lower) -->
-    <line x1="55" y1="34" x2="38" y2="55" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Affected arm (raised by stick) -->
-    <line x1="55" y1="34" x2="76" y2="14" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
-    <!-- Stick -->
-    <line x1="38" y1="55" x2="76" y2="14" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-dasharray="4,2"/>
-    <!-- Arrow up -->
-    <polygon points="76,9 80,18 72,18" fill="#ef4444"/>
-    <text x="22" y="95" font-size="9" fill="#ef4444" font-weight="700" font-family="system-ui">막대로 아픈 팔 올리기</text>
-  </svg>`,
-
-  supineER: `<svg viewBox="0 0 110 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- Floor line -->
-    <line x1="5" y1="72" x2="105" y2="72" stroke="#d1d5db" stroke-width="2"/>
-    <!-- Head (lying) -->
-    <circle cx="18" cy="60" r="8" stroke="#374151" stroke-width="2.5" fill="white"/>
-    <!-- Torso (horizontal) -->
-    <line x1="26" y1="60" x2="80" y2="60" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Legs -->
-    <line x1="80" y1="60" x2="92" y2="68" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <line x1="80" y1="60" x2="100" y2="62" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Upper arm (horizontal) -->
-    <line x1="50" y1="60" x2="50" y2="42" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
-    <!-- Forearm bent 90° rotating outward -->
-    <line x1="50" y1="42" x2="72" y2="38" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
-    <!-- Rotation arrow -->
-    <path d="M68,30 A10,10,0,0,1,50,38" stroke="#ef4444" stroke-width="2" fill="none" stroke-dasharray="3,2" stroke-linecap="round"/>
-    <polygon points="50,34 46,40 54,40" fill="#ef4444"/>
-    <text x="12" y="92" font-size="9" fill="#ef4444" font-weight="700" font-family="system-ui">누워서 팔꿈치 90° 회전</text>
-  </svg>`,
-
-  pulley: `<svg viewBox="0 0 110 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- Pulley wheel at top -->
-    <circle cx="55" cy="8" r="6" stroke="#6b7280" stroke-width="2" fill="white"/>
-    <!-- Door frame suggestion -->
-    <line x1="49" y1="0" x2="49" y2="20" stroke="#d1d5db" stroke-width="3"/>
-    <line x1="61" y1="0" x2="61" y2="20" stroke="#d1d5db" stroke-width="3"/>
-    <!-- Rope left (good arm pulls down) -->
-    <line x1="50" y1="12" x2="38" y2="40" stroke="#6b7280" stroke-width="2" stroke-dasharray="4,2"/>
-    <!-- Rope right (affected arm goes up) -->
-    <line x1="60" y1="12" x2="72" y2="38" stroke="#6b7280" stroke-width="2" stroke-dasharray="4,2"/>
-    <!-- Head -->
-    <circle cx="55" cy="28" r="8" stroke="#374151" stroke-width="2.5" fill="white"/>
-    <!-- Torso -->
-    <line x1="55" y1="36" x2="55" y2="72" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Good arm (down, pulling) -->
-    <line x1="55" y1="50" x2="38" y2="62" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Affected arm (up) -->
-    <line x1="55" y1="50" x2="72" y2="36" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
-    <!-- Legs -->
-    <line x1="55" y1="72" x2="44" y2="92" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <line x1="55" y1="72" x2="66" y2="92" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Arrow up on affected arm -->
-    <polygon points="72,31 76,40 68,40" fill="#ef4444"/>
-  </svg>`,
-
-  wallWalk: `<svg viewBox="0 0 110 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- Wall -->
-    <rect x="82" y="0" width="8" height="100" fill="#e5e7eb"/>
-    <!-- Head -->
-    <circle cx="48" cy="14" r="8" stroke="#374151" stroke-width="2.5" fill="white"/>
-    <!-- Torso -->
-    <line x1="48" y1="22" x2="48" y2="62" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Legs -->
-    <line x1="48" y1="62" x2="38" y2="86" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <line x1="48" y1="62" x2="58" y2="86" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Good arm (lower on wall) -->
-    <line x1="48" y1="38" x2="82" y2="52" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Affected arm (higher on wall) -->
-    <line x1="48" y1="38" x2="82" y2="22" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
-    <!-- Finger dots on wall -->
-    <circle cx="82" cy="52" r="3" fill="#374151"/>
-    <circle cx="82" cy="22" r="3" fill="#ef4444"/>
-    <!-- Arrow going up on wall -->
-    <polygon points="82,14 86,24 78,24" fill="#ef4444"/>
-    <text x="10" y="98" font-size="9" fill="#ef4444" font-weight="700" font-family="system-ui">벽 따라 손가락 올리기</text>
-  </svg>`,
-
-  sidelyingER: `<svg viewBox="0 0 110 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- Floor -->
-    <line x1="5" y1="78" x2="105" y2="78" stroke="#d1d5db" stroke-width="2"/>
-    <!-- Head (on side) -->
-    <circle cx="16" cy="62" r="8" stroke="#374151" stroke-width="2.5" fill="white"/>
-    <!-- Torso (horizontal) -->
-    <line x1="24" y1="62" x2="78" y2="62" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Bottom legs -->
-    <line x1="78" y1="62" x2="94" y2="70" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <line x1="78" y1="62" x2="102" y2="62" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Upper arm perpendicular to torso -->
-    <line x1="48" y1="62" x2="48" y2="44" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
-    <!-- Forearm rotating toward ceiling -->
-    <line x1="48" y1="44" x2="68" y2="34" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
-    <!-- Arc arrow showing rotation up -->
-    <path d="M48,44 A14,14,0,0,1,62,30" stroke="#ef4444" stroke-width="2" fill="none" stroke-dasharray="3,2" stroke-linecap="round"/>
-    <polygon points="66,26 62,34 58,30" fill="#ef4444"/>
-    <text x="10" y="96" font-size="9" fill="#ef4444" font-weight="700" font-family="system-ui">옆으로 누워 팔 회전</text>
-  </svg>`,
-
-  overheadPress: `<svg viewBox="0 0 110 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- Head -->
-    <circle cx="55" cy="12" r="8" stroke="#374151" stroke-width="2.5" fill="white"/>
-    <!-- Torso -->
-    <line x1="55" y1="20" x2="55" y2="58" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Legs -->
-    <line x1="55" y1="58" x2="44" y2="82" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <line x1="55" y1="58" x2="66" y2="82" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Good arm (bent at side) -->
-    <line x1="55" y1="36" x2="36" y2="48" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Affected arm fully raised -->
-    <line x1="55" y1="36" x2="74" y2="8" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
-    <!-- Weight circle at hand -->
-    <circle cx="76" cy="6" r="5" stroke="#ef4444" stroke-width="2" fill="white"/>
-    <!-- Arrow up -->
-    <polygon points="74,0 78,8 70,8" fill="#ef4444"/>
-    <text x="18" y="96" font-size="9" fill="#ef4444" font-weight="700" font-family="system-ui">아픈 팔 위로 들기</text>
-  </svg>`,
-
-  crossBody: `<svg viewBox="0 0 110 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- Head -->
-    <circle cx="55" cy="12" r="8" stroke="#374151" stroke-width="2.5" fill="white"/>
-    <!-- Torso -->
-    <line x1="55" y1="20" x2="55" y2="60" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="55" y1="19" x2="55" y2="60" stroke="#374151" stroke-width="3" stroke-linecap="round"/>
     <!-- Legs -->
     <line x1="55" y1="60" x2="44" y2="84" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
     <line x1="55" y1="60" x2="66" y2="84" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Good arm (holding affected arm) -->
-    <line x1="55" y1="36" x2="74" y2="44" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Good arm (right, lower — pushing stick) -->
+    <line x1="55" y1="35" x2="36" y2="55" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Affected arm (left, raised high by stick) -->
+    <line x1="55" y1="35" x2="78" y2="12" stroke="#ef4444" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- Stick / wand -->
+    <line x1="36" y1="55" x2="78" y2="12" stroke="#9ca3af" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Grip circles at each end -->
+    <circle cx="36" cy="55" r="4" fill="#6b7280" opacity="0.6"/>
+    <circle cx="78" cy="12" r="4" fill="#ef4444" opacity="0.7"/>
+    <!-- Arrow indicating upward lift -->
+    <polygon points="78,5 82,14 74,14" fill="#ef4444"/>
+    <!-- "Good arm" indicator -->
+    <text x="14" y="58" font-size="8" fill="#6b7280" font-family="system-ui">건강한 팔</text>
+    <text x="62" y="12" font-size="8" fill="#ef4444" font-family="system-ui" font-weight="700">아픈 팔</text>
+  </svg>`,
+
+  // Phase 1 — 3: Supine external rotation (lying on back, ER with good hand assist)
+  supineER: `<svg viewBox="0 0 110 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="110" height="100" rx="8" fill="#fff5f5"/>
+    <!-- Mat / floor -->
+    <rect x="4" y="68" width="102" height="6" rx="2" fill="#e5e7eb"/>
+    <!-- Pillow hint under head -->
+    <ellipse cx="18" cy="65" rx="12" ry="5" fill="#dbeafe" opacity="0.8"/>
+    <!-- Head (lying on back, looking up) -->
+    <circle cx="18" cy="62" r="9" fill="#f9fafb" stroke="#374151" stroke-width="2.2"/>
+    <circle cx="16" cy="61" r="1.2" fill="#374151"/>
+    <circle cx="22" cy="61" r="1.2" fill="#374151"/>
+    <!-- Torso (horizontal) -->
+    <line x1="27" y1="62" x2="82" y2="62" stroke="#374151" stroke-width="3" stroke-linecap="round"/>
+    <!-- Legs (knees slightly bent) -->
+    <line x1="82" y1="62" x2="94" y2="67" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="94" y1="67" x2="100" y2="62" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Affected arm: upper arm vertical (elbow at 90°) -->
+    <line x1="52" y1="62" x2="52" y2="44" stroke="#ef4444" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- Forearm neutral position (pointing up) — ghost position -->
+    <line x1="52" y1="44" x2="52" y2="30" stroke="#ef4444" stroke-width="2" stroke-dasharray="3,2" stroke-linecap="round" opacity="0.35"/>
+    <!-- Forearm rotated outward (target ER position) -->
+    <line x1="52" y1="44" x2="70" y2="36" stroke="#ef4444" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- ER arc arrow -->
+    <path d="M52,30 A14,8,0,0,1,70,36" stroke="#ef4444" stroke-width="2" fill="none" stroke-dasharray="3,2" stroke-linecap="round"/>
+    <polygon points="68,31 72,38 66,39" fill="#ef4444"/>
+    <!-- 90° elbow angle indicator -->
+    <rect x="49" y="41" width="6" height="6" fill="none" stroke="#374151" stroke-width="1" opacity="0.5"/>
+    <text x="56" y="49" font-size="7" fill="#374151" font-family="system-ui" opacity="0.7">90°</text>
+    <text x="33" y="90" font-size="8" fill="#ef4444" font-family="system-ui" font-weight="700">팔꿈치 90° · 바깥 회전</text>
+  </svg>`,
+
+  // Phase 2 — 1: Pulley overhead elevation
+  pulley: `<svg viewBox="0 0 110 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="110" height="100" rx="8" fill="#fffbf0"/>
+    <!-- Door frame -->
+    <rect x="44" y="0" width="22" height="3" rx="1" fill="#9ca3af"/>
+    <line x1="44" y1="0" x2="44" y2="22" stroke="#d1d5db" stroke-width="4" stroke-linecap="round"/>
+    <line x1="66" y1="0" x2="66" y2="22" stroke="#d1d5db" stroke-width="4" stroke-linecap="round"/>
+    <!-- Pulley wheel -->
+    <circle cx="55" cy="6" r="6" fill="white" stroke="#6b7280" stroke-width="2"/>
+    <circle cx="55" cy="6" r="2" fill="#9ca3af"/>
+    <!-- Rope left (good arm, pulled down) -->
+    <line x1="51" y1="10" x2="38" y2="42" stroke="#9ca3af" stroke-width="2" stroke-dasharray="4,2"/>
+    <!-- Rope right (affected arm, goes up) -->
+    <line x1="59" y1="10" x2="72" y2="36" stroke="#9ca3af" stroke-width="2" stroke-dasharray="4,2"/>
+    <!-- Head -->
+    <circle cx="55" cy="28" r="9" fill="#f9fafb" stroke="#374151" stroke-width="2.2"/>
+    <circle cx="52" cy="27" r="1.2" fill="#374151"/>
+    <circle cx="58" cy="27" r="1.2" fill="#374151"/>
+    <!-- Torso -->
+    <line x1="55" y1="37" x2="55" y2="74" stroke="#374151" stroke-width="3" stroke-linecap="round"/>
+    <!-- Legs -->
+    <line x1="55" y1="74" x2="45" y2="95" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="55" y1="74" x2="65" y2="95" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Good arm (pulling rope down) -->
+    <line x1="55" y1="52" x2="38" y2="64" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <polygon points="38,68 34,62 42,62" fill="#374151" opacity="0.6"/>
+    <!-- Affected arm (raised by rope) -->
+    <line x1="55" y1="52" x2="72" y2="36" stroke="#f59e0b" stroke-width="3.5" stroke-linecap="round"/>
+    <polygon points="72,30 76,38 68,38" fill="#f59e0b"/>
+    <text x="12" y="98" font-size="8" fill="#f59e0b" font-family="system-ui" font-weight="700">도르래로 아픈 팔 올리기</text>
+  </svg>`,
+
+  // Phase 2 — 2: Wall finger walk
+  wallWalk: `<svg viewBox="0 0 110 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="110" height="100" rx="8" fill="#fffbf0"/>
+    <!-- Wall with texture hint -->
+    <rect x="84" y="0" width="20" height="100" rx="0" fill="#e5e7eb"/>
+    <line x1="84" y1="0" x2="84" y2="100" stroke="#d1d5db" stroke-width="1.5"/>
+    <!-- Progress marks on wall -->
+    <line x1="84" y1="20" x2="90" y2="20" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3,2"/>
+    <line x1="84" y1="38" x2="90" y2="38" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="3,2"/>
+    <text x="92" y="23" font-size="7" fill="#f59e0b" font-family="system-ui" font-weight="700">오늘</text>
+    <text x="92" y="41" font-size="7" fill="#9ca3af" font-family="system-ui">어제</text>
+    <!-- Head -->
+    <circle cx="46" cy="13" r="9" fill="#f9fafb" stroke="#374151" stroke-width="2.2"/>
+    <circle cx="43" cy="12" r="1.2" fill="#374151"/>
+    <circle cx="49" cy="12" r="1.2" fill="#374151"/>
+    <!-- Torso -->
+    <line x1="46" y1="22" x2="46" y2="62" stroke="#374151" stroke-width="3" stroke-linecap="round"/>
+    <!-- Legs -->
+    <line x1="46" y1="62" x2="36" y2="88" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="46" y1="62" x2="56" y2="88" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Good arm (lower, stabilizing) -->
+    <line x1="46" y1="40" x2="84" y2="52" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="84" cy="52" r="3.5" fill="#6b7280"/>
+    <!-- Affected arm (reaching high) -->
+    <line x1="46" y1="40" x2="84" y2="20" stroke="#f59e0b" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="84" cy="20" r="3.5" fill="#f59e0b"/>
+    <!-- Upward arrow on wall -->
+    <polygon points="84,12 88,22 80,22" fill="#f59e0b"/>
+  </svg>`,
+
+  // Phase 2 — 3: Side-lying external rotation
+  sidelyingER: `<svg viewBox="0 0 110 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="110" height="100" rx="8" fill="#fffbf0"/>
+    <!-- Mat / floor -->
+    <rect x="4" y="74" width="102" height="6" rx="2" fill="#e5e7eb"/>
+    <!-- Head (lying on side) -->
+    <circle cx="15" cy="62" r="9" fill="#f9fafb" stroke="#374151" stroke-width="2.2"/>
+    <circle cx="13" cy="61" r="1.2" fill="#374151"/>
+    <circle cx="18" cy="61" r="1.2" fill="#374151"/>
+    <!-- Torso -->
+    <line x1="24" y1="62" x2="80" y2="62" stroke="#374151" stroke-width="3" stroke-linecap="round"/>
+    <!-- Legs (stacked) -->
+    <line x1="80" y1="62" x2="96" y2="70" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="80" y1="62" x2="104" y2="62" stroke="#374151" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+    <!-- Upper arm (elbow at 90°, upper arm perpendicular to torso) -->
+    <line x1="50" y1="62" x2="50" y2="44" stroke="#f59e0b" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- Forearm neutral (pointing toward viewer) — ghost -->
+    <line x1="50" y1="44" x2="50" y2="30" stroke="#f59e0b" stroke-width="2" stroke-dasharray="3,2" opacity="0.35"/>
+    <!-- Forearm rotated to ceiling (target position) -->
+    <line x1="50" y1="44" x2="68" y2="32" stroke="#f59e0b" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- ER arc arrow -->
+    <path d="M50,30 A14,10,0,0,1,68,32" stroke="#f59e0b" stroke-width="2" fill="none" stroke-dasharray="3,2" stroke-linecap="round"/>
+    <polygon points="66,27 70,34 64,35" fill="#f59e0b"/>
+    <!-- Elbow 90° indicator -->
+    <rect x="47" y="41" width="6" height="6" fill="none" stroke="#374151" stroke-width="1" opacity="0.5"/>
+    <!-- Resistance cue: small weight at wrist -->
+    <ellipse cx="68" cy="32" rx="5" ry="3.5" fill="#f59e0b" opacity="0.3" stroke="#f59e0b" stroke-width="1"/>
+    <text x="30" y="93" font-size="8" fill="#f59e0b" font-family="system-ui" font-weight="700">옆으로 누워 팔 회전</text>
+  </svg>`,
+
+  // Phase 3 — 1: Active overhead press
+  overheadPress: `<svg viewBox="0 0 110 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="110" height="100" rx="8" fill="#f0fdf4"/>
+    <!-- Head -->
+    <circle cx="55" cy="10" r="9" fill="#f9fafb" stroke="#374151" stroke-width="2.2"/>
+    <circle cx="52" cy="9" r="1.2" fill="#374151"/>
+    <circle cx="58" cy="9" r="1.2" fill="#374151"/>
+    <!-- Torso (straight, engaged) -->
+    <line x1="55" y1="19" x2="55" y2="60" stroke="#374151" stroke-width="3" stroke-linecap="round"/>
+    <!-- Legs -->
+    <line x1="55" y1="60" x2="44" y2="86" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="55" y1="60" x2="66" y2="86" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Reference arm (bent at side, elbow 90°) -->
+    <line x1="55" y1="36" x2="36" y2="46" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="36" y1="46" x2="28" y2="36" stroke="#374151" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
+    <!-- Affected arm raised overhead -->
+    <line x1="55" y1="36" x2="74" y2="10" stroke="#10b981" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- Dumbbell at hand -->
+    <rect x="70" y="3" width="12" height="5" rx="2.5" fill="#10b981" opacity="0.3" stroke="#10b981" stroke-width="1.5"/>
+    <circle cx="71" cy="5.5" r="3" fill="#10b981" opacity="0.6"/>
+    <circle cx="81" cy="5.5" r="3" fill="#10b981" opacity="0.6"/>
+    <!-- Arrow up -->
+    <polygon points="74,2 78,10 70,10" fill="#10b981"/>
+    <!-- Shoulder shrug warning -->
+    <path d="M46,22 Q50,18 55,19" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="2,2" fill="none" opacity="0.6"/>
+    <text x="8" y="96" font-size="8" fill="#ef4444" font-family="system-ui" opacity="0.8">어깨 올라오지 않게!</text>
+  </svg>`,
+
+  // Phase 3 — 2: Cross-body stretch
+  crossBody: `<svg viewBox="0 0 110 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="110" height="100" rx="8" fill="#f0fdf4"/>
+    <!-- Head -->
+    <circle cx="55" cy="10" r="9" fill="#f9fafb" stroke="#374151" stroke-width="2.2"/>
+    <circle cx="52" cy="9" r="1.2" fill="#374151"/>
+    <circle cx="58" cy="9" r="1.2" fill="#374151"/>
+    <!-- Torso -->
+    <line x1="55" y1="19" x2="55" y2="62" stroke="#374151" stroke-width="3" stroke-linecap="round"/>
+    <!-- Legs -->
+    <line x1="55" y1="62" x2="44" y2="86" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="55" y1="62" x2="66" y2="86" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Good arm (reaching across) -->
+    <line x1="55" y1="36" x2="76" y2="46" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
     <!-- Affected arm crossing body -->
-    <line x1="55" y1="36" x2="30" y2="44" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
-    <!-- Good hand holding affected wrist -->
-    <circle cx="30" cy="44" r="4" stroke="#374151" stroke-width="2" fill="white"/>
-    <!-- Arrow showing pull across -->
-    <polygon points="22,44 30,40 30,48" fill="#374151"/>
-    <text x="14" y="96" font-size="9" fill="#ef4444" font-weight="700" font-family="system-ui">가슴 앞으로 당기기</text>
+    <line x1="55" y1="36" x2="28" y2="44" stroke="#10b981" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- Good hand gripping affected wrist -->
+    <circle cx="28" cy="44" r="5" fill="white" stroke="#374151" stroke-width="2"/>
+    <!-- Pull arrow (left, horizontal) -->
+    <polygon points="18,44 28,40 28,48" fill="#374151"/>
+    <!-- Stretch sensation indicator (dotted arc at shoulder) -->
+    <path d="M68,28 A16,16,0,0,1,74,46" stroke="#10b981" stroke-width="1.5" stroke-dasharray="2,2" fill="none" opacity="0.6"/>
+    <text x="22" y="92" font-size="8" fill="#10b981" font-family="system-ui" font-weight="700">← 가슴 앞으로 당기기</text>
   </svg>`,
 
+  // Phase 3 — 3: Sleeper stretch
   sleeper: `<svg viewBox="0 0 110 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- Floor -->
-    <line x1="5" y1="76" x2="105" y2="76" stroke="#d1d5db" stroke-width="2"/>
-    <!-- Head -->
-    <circle cx="16" cy="58" r="8" stroke="#374151" stroke-width="2.5" fill="white"/>
+    <rect width="110" height="100" rx="8" fill="#f0fdf4"/>
+    <!-- Mat -->
+    <rect x="4" y="72" width="102" height="6" rx="2" fill="#e5e7eb"/>
+    <!-- Pillow -->
+    <ellipse cx="16" cy="68" rx="13" ry="6" fill="#dbeafe" opacity="0.8"/>
+    <!-- Head (lying on affected side) -->
+    <circle cx="16" cy="60" r="9" fill="#f9fafb" stroke="#374151" stroke-width="2.2"/>
+    <circle cx="14" cy="59" r="1.2" fill="#374151"/>
+    <circle cx="20" cy="59" r="1.2" fill="#374151"/>
     <!-- Torso -->
-    <line x1="24" y1="58" x2="80" y2="58" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Legs -->
-    <line x1="80" y1="58" x2="98" y2="66" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <line x1="80" y1="58" x2="104" y2="58" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Upper arm (affected, perpendicular) -->
-    <line x1="50" y1="58" x2="50" y2="40" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
-    <!-- Forearm (being pressed down) -->
-    <line x1="50" y1="40" x2="30" y2="48" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+    <line x1="25" y1="60" x2="82" y2="60" stroke="#374151" stroke-width="3" stroke-linecap="round"/>
+    <!-- Legs (stacked) -->
+    <line x1="82" y1="60" x2="100" y2="68" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="82" y1="60" x2="106" y2="60" stroke="#374151" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+    <!-- Affected arm: upper arm perpendicular up from shoulder -->
+    <line x1="50" y1="60" x2="50" y2="42" stroke="#10b981" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- Forearm (being pressed toward floor — internal rotation stretch) -->
+    <line x1="50" y1="42" x2="32" y2="50" stroke="#10b981" stroke-width="3.5" stroke-linecap="round"/>
     <!-- Good hand pressing wrist down -->
-    <circle cx="28" cy="48" r="4" stroke="#374151" stroke-width="2" fill="white"/>
-    <!-- Arrow down -->
-    <polygon points="28,56 32,48 24,48" fill="#374151"/>
-    <text x="12" y="94" font-size="9" fill="#ef4444" font-weight="700" font-family="system-ui">손목 눌러 스트레칭</text>
+    <circle cx="30" cy="50" r="5" fill="white" stroke="#374151" stroke-width="2"/>
+    <!-- Downward press arrow -->
+    <polygon points="30,58 34,50 26,50" fill="#374151"/>
+    <!-- Shoulder capsule stretch indicator -->
+    <path d="M58,44 A12,12,0,0,1,62,60" stroke="#10b981" stroke-width="1.5" stroke-dasharray="2,2" fill="none" opacity="0.6"/>
+    <text x="10" y="92" font-size="8" fill="#10b981" font-family="system-ui" font-weight="700">어깨 뒤 캡슐 스트레칭</text>
   </svg>`,
 
+  // Phase 4 — 1: Functional overhead activity (reaching shelf)
   functional: `<svg viewBox="0 0 110 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- Cabinet shelf -->
-    <rect x="70" y="20" width="34" height="5" rx="1" fill="#d1d5db"/>
-    <rect x="70" y="14" width="34" height="6" rx="1" fill="#e5e7eb"/>
-    <!-- Cabinet item -->
-    <rect x="80" y="8" width="12" height="12" rx="2" fill="#bfdbfe"/>
+    <rect width="110" height="100" rx="8" fill="#f0f4ff"/>
+    <!-- Cabinet with shelf -->
+    <rect x="72" y="0" width="34" height="55" rx="3" fill="#e5e7eb"/>
+    <line x1="72" y1="22" x2="106" y2="22" stroke="#d1d5db" stroke-width="1.5"/>
+    <!-- Items on shelf (cup, bottle) -->
+    <rect x="80" y="10" width="8" height="12" rx="2" fill="#bfdbfe"/>
+    <rect x="92" y="8" width="6" height="14" rx="2" fill="#a7f3d0"/>
+    <!-- Floor line -->
+    <line x1="4" y1="90" x2="106" y2="90" stroke="#d1d5db" stroke-width="1.5"/>
     <!-- Head -->
-    <circle cx="38" cy="14" r="8" stroke="#374151" stroke-width="2.5" fill="white"/>
+    <circle cx="38" cy="12" r="9" fill="#f9fafb" stroke="#374151" stroke-width="2.2"/>
+    <circle cx="35" cy="11" r="1.2" fill="#374151"/>
+    <circle cx="41" cy="11" r="1.2" fill="#374151"/>
     <!-- Torso -->
-    <line x1="38" y1="22" x2="38" y2="62" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="38" y1="21" x2="38" y2="64" stroke="#374151" stroke-width="3" stroke-linecap="round"/>
     <!-- Legs -->
-    <line x1="38" y1="62" x2="28" y2="86" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <line x1="38" y1="62" x2="48" y2="86" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Good arm (at side) -->
-    <line x1="38" y1="38" x2="22" y2="52" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Affected arm reaching up to shelf -->
-    <line x1="38" y1="38" x2="70" y2="18" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
-    <text x="10" y="100" font-size="9" fill="#ef4444" font-weight="700" font-family="system-ui">선반 위 물건 잡기</text>
+    <line x1="38" y1="64" x2="28" y2="90" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="38" y1="64" x2="48" y2="90" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Non-affected arm (relaxed at side) -->
+    <line x1="38" y1="40" x2="24" y2="54" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Affected arm reaching to shelf -->
+    <line x1="38" y1="40" x2="72" y2="18" stroke="#0066ff" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- Hand at shelf item -->
+    <circle cx="72" cy="18" r="4.5" fill="white" stroke="#0066ff" stroke-width="2"/>
   </svg>`,
 
+  // Phase 4 — 2: Resistance band series
   band: `<svg viewBox="0 0 110 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- Anchor point (door/wall) -->
-    <rect x="0" y="50" width="8" height="8" rx="1" fill="#d1d5db"/>
+    <rect width="110" height="100" rx="8" fill="#f0f4ff"/>
+    <!-- Door / anchor point -->
+    <rect x="0" y="44" width="10" height="12" rx="2" fill="#9ca3af"/>
+    <circle cx="8" cy="50" r="3" fill="#6b7280"/>
     <!-- Head -->
-    <circle cx="60" cy="14" r="8" stroke="#374151" stroke-width="2.5" fill="white"/>
-    <!-- Torso -->
-    <line x1="60" y1="22" x2="60" y2="62" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="64" cy="13" r="9" fill="#f9fafb" stroke="#374151" stroke-width="2.2"/>
+    <circle cx="61" cy="12" r="1.2" fill="#374151"/>
+    <circle cx="67" cy="12" r="1.2" fill="#374151"/>
+    <!-- Torso (angled for external rotation) -->
+    <line x1="64" y1="22" x2="64" y2="64" stroke="#374151" stroke-width="3" stroke-linecap="round"/>
     <!-- Legs -->
-    <line x1="60" y1="62" x2="50" y2="86" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <line x1="60" y1="62" x2="70" y2="86" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Good arm (at side) -->
-    <line x1="60" y1="38" x2="76" y2="52" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Affected arm with band -->
-    <line x1="60" y1="38" x2="38" y2="26" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
-    <!-- Band (elastic, curved) -->
-    <path d="M8,54 Q24,44 38,28" stroke="#10b981" stroke-width="2.5" fill="none" stroke-dasharray="4,2" stroke-linecap="round"/>
-    <!-- Arrow up on affected arm -->
-    <polygon points="36,20 40,28 32,28" fill="#ef4444"/>
-    <text x="18" y="100" font-size="9" fill="#ef4444" font-weight="700" font-family="system-ui">밴드로 저항 운동</text>
+    <line x1="64" y1="64" x2="54" y2="90" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="64" y1="64" x2="74" y2="90" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Non-affected arm (at side) -->
+    <line x1="64" y1="40" x2="80" y2="54" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Affected arm: pulling band in external rotation -->
+    <line x1="64" y1="40" x2="40" y2="28" stroke="#0066ff" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- Resistance band (elastic, curved path) -->
+    <path d="M8,50 Q26,42 40,28" stroke="#0066ff" stroke-width="2.5" fill="none" stroke-dasharray="5,3" stroke-linecap="round"/>
+    <!-- Tension dots on band -->
+    <circle cx="20" cy="47" r="2.5" fill="#0066ff" opacity="0.4"/>
+    <circle cx="32" cy="38" r="2.5" fill="#0066ff" opacity="0.4"/>
+    <!-- Movement arrow -->
+    <polygon points="38,22 42,30 34,30" fill="#0066ff"/>
+    <text x="30" y="98" font-size="8" fill="#0066ff" font-family="system-ui" font-weight="700">밴드 저항 운동</text>
   </svg>`,
 
+  // Phase 4 — 3: Sport-specific training (throwing/serving motion)
   sport: `<svg viewBox="0 0 110 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- Head -->
-    <circle cx="40" cy="14" r="8" stroke="#374151" stroke-width="2.5" fill="white"/>
-    <!-- Torso (slight lean) -->
-    <line x1="40" y1="22" x2="42" y2="62" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Legs -->
-    <line x1="42" y1="62" x2="30" y2="86" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <line x1="42" y1="62" x2="56" y2="82" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Non-dominant arm -->
-    <line x1="40" y1="38" x2="24" y2="50" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- Throwing/reaching arm (affected, extended back) -->
-    <line x1="40" y1="38" x2="74" y2="20" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
-    <!-- Motion arc (throw/reach direction) -->
-    <path d="M74,20 Q86,10 90,24" stroke="#ef4444" stroke-width="2" fill="none" stroke-dasharray="3,2" stroke-linecap="round"/>
-    <polygon points="88,28 92,20 96,26" fill="#ef4444"/>
-    <text x="8" y="100" font-size="9" fill="#ef4444" font-weight="700" font-family="system-ui">일상 & 스포츠 복귀</text>
+    <rect width="110" height="100" rx="8" fill="#f0f4ff"/>
+    <!-- Floor / ground -->
+    <line x1="4" y1="90" x2="106" y2="90" stroke="#d1d5db" stroke-width="1.5"/>
+    <!-- Head (dynamic lean) -->
+    <circle cx="38" cy="12" r="9" fill="#f9fafb" stroke="#374151" stroke-width="2.2"/>
+    <circle cx="35" cy="11" r="1.2" fill="#374151"/>
+    <circle cx="41" cy="11" r="1.2" fill="#374151"/>
+    <!-- Torso (rotation lean into throw) -->
+    <line x1="38" y1="21" x2="40" y2="62" stroke="#374151" stroke-width="3" stroke-linecap="round"/>
+    <!-- Legs (stride stance) -->
+    <line x1="40" y1="62" x2="26" y2="90" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="40" y1="62" x2="56" y2="82" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Lead arm (pointing forward) -->
+    <line x1="38" y1="38" x2="22" y2="48" stroke="#374151" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Throwing arm (affected — overhead cocked) -->
+    <line x1="38" y1="38" x2="72" y2="16" stroke="#0066ff" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- Ball at hand -->
+    <circle cx="74" cy="14" r="6" fill="#0066ff" opacity="0.2" stroke="#0066ff" stroke-width="2"/>
+    <!-- Release arc (throw path) -->
+    <path d="M74,14 Q88,8 94,22" stroke="#0066ff" stroke-width="2" fill="none" stroke-dasharray="4,3" stroke-linecap="round"/>
+    <polygon points="92,26 96,18 100,24" fill="#0066ff"/>
+    <!-- Speed lines suggesting motion -->
+    <line x1="80" y1="30" x2="94" y2="26" stroke="#0066ff" stroke-width="1" opacity="0.4"/>
+    <line x1="82" y1="36" x2="96" y2="33" stroke="#0066ff" stroke-width="1" opacity="0.3"/>
+    <text x="8" y="100" font-size="8" fill="#0066ff" font-family="system-ui" font-weight="700">스포츠 복귀 훈련</text>
   </svg>`,
 };
 

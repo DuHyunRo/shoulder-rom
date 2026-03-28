@@ -67,13 +67,13 @@ function runLoop(video, canvas, landmarker, onFrame) {
     // Video not ready yet
     if (video.readyState < 2) return;
 
-    // Keep canvas in sync with video intrinsic resolution
-    // (must use videoWidth/videoHeight, not offsetWidth — avoids HiDPI misalignment)
+    // Keep canvas drawing buffer in sync with video intrinsic resolution.
+    // Do NOT set canvas.style.width/height here — the CSS position:absolute;inset:0
+    // already handles display sizing, and setting inline px values while the
+    // camera-tab is hidden (background start) would lock the canvas at 0×0.
     if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
-      canvas.width        = video.videoWidth;
-      canvas.height       = video.videoHeight;
-      canvas.style.width  = video.clientWidth  + 'px';
-      canvas.style.height = video.clientHeight + 'px';
+      canvas.width  = video.videoWidth;
+      canvas.height = video.videoHeight;
     }
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);

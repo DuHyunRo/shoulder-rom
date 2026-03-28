@@ -97,11 +97,8 @@ export function renderProgress(container) {
 
   // ── Chart ─────────────────────────────────────────────────────────
   const chartWrap = el('div', { style: 'padding:8px 16px 0;' });
-  const canvas = el('canvas', {
-    style: 'width:100%;height:auto;border:1.5px solid #ebebeb;border-radius:12px;display:block;',
-  });
-  canvas.width  = 320;
-  canvas.height = 160;
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = 'width:100%;height:auto;border:1.5px solid #ebebeb;border-radius:12px;display:block;';
   chartWrap.appendChild(canvas);
   container.appendChild(chartWrap);
   drawChart(canvas, sessions, target, phaseColor);
@@ -166,8 +163,14 @@ export function renderProgress(container) {
 // ── Chart drawing ──────────────────────────────────────────────────────
 
 function drawChart(canvas, sessions, target, color) {
+  // Scale for device pixel ratio — crisp on retina/hi-DPI phones
+  const dpr = window.devicePixelRatio || 1;
+  const W = 320, H = 160;
+  canvas.width  = Math.round(W * dpr);
+  canvas.height = Math.round(H * dpr);
+  // CSS display size stays at natural 2:1 ratio via width:100%;height:auto
   const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
+  ctx.scale(dpr, dpr);
   const cW = W - PAD.left - PAD.right;
   const cH = H - PAD.top  - PAD.bottom;
 

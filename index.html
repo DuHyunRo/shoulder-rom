@@ -84,6 +84,35 @@
     #ov-denied  { background: rgba(0,0,0,0.92); }
     #ov-npose   { background: rgba(0,0,0,0.42); pointer-events: none; }
 
+    /* ── Reference pose panel ──────────────────────────────────────── */
+    #ref-panel {
+      position: absolute;
+      top: 58px; right: 10px;
+      background: rgba(0,0,0,0.72);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 14px;
+      padding: 10px 8px 8px;
+      width: 88px;
+      text-align: center;
+      z-index: 6;
+      pointer-events: none;
+    }
+    .ref-label {
+      font-size: 10px; font-weight: 700;
+      color: rgba(255,255,255,0.65);
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+    #ref-svg svg { width: 72px; height: 72px; }
+    .ref-angle {
+      font-size: 13px; font-weight: 800;
+      color: #00C8E8;
+      margin-top: 4px;
+    }
+
     /* App brand in loading screen */
     .brand-logo {
       width: 56px; height: 56px;
@@ -622,6 +651,13 @@
     <p style="font-size:16px;">전신이 화면 안에 보이도록 뒤로 물러서세요</p>
   </div>
 
+  <!-- Reference pose panel — shows target arm position during measurement -->
+  <div id="ref-panel">
+    <div class="ref-label">목표 자세</div>
+    <div id="ref-svg"></div>
+    <div class="ref-angle" id="ref-angle">목표 45°</div>
+  </div>
+
   <!-- Celebration overlay -->
   <div id="celebrate-overlay">
     <div class="cel-icon">🎉</div>
@@ -1148,6 +1184,57 @@
     if (name === 'progress-tab') renderProgress(document.getElementById('progress-tab'));
     if (name === 'share-tab')    renderShare(document.getElementById('share-tab'), null);
     if (name === 'guide-tab')    renderGuide(document.getElementById('guide-tab'));
+    if (name === 'camera-tab')   _updateRefPanel();
+  }
+
+  function _updateRefPanel() {
+    const phase  = getCurrentPhase();
+    const target = getTargetAngleForPhase(phase);
+    document.getElementById('ref-angle').textContent = `목표 ${target}°`;
+    document.getElementById('ref-svg').innerHTML = _refPoseSVG(target, phase);
+  }
+
+  function _refPoseSVG(deg, phase) {
+    const colors = { 1: '#ef4444', 2: '#f59e0b', 3: '#10b981', 4: '#0066ff' };
+    const c = colors[phase] || '#00C8E8';
+    // Side view: person standing, right arm raised to `deg` from body axis
+    // Shoulder at (36, 36) in 72×80 viewBox
+    const rad = (deg * Math.PI) / 180;
+    const r   = 28;
+    const sx  = 36, sy = 36;
+    const ex  = Math.round(sx + Math.sin(rad) * r);
+    const ey  = Math.round(sy - Math.cos(rad) * r);
+    // Arc path from 0° (arm at side) to deg
+    const bodyEndX = sx, bodyEndY = sy + r;
+    const largeArc = deg > 180 ? 1 : 0;
+    return `<svg viewBox="0 0 72 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- body axis (down) dashed -->
+      <line x1="${sx}" y1="${sy}" x2="${bodyEndX}" y2="${bodyEndY}"
+            stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-dasharray="3,2"/>
+      <!-- arc sweep from body-down to target angle -->
+      <path d="M ${sx} ${bodyEndY} A ${r} ${r} 0 ${largeArc} 0 ${ex} ${ey}"
+            stroke="${c}" stroke-width="1.5" fill="none" stroke-dasharray="4,3" opacity="0.8"/>
+      <!-- head -->
+      <circle cx="${sx}" cy="10" r="7" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/>
+      <!-- torso -->
+      <line x1="${sx}" y1="17" x2="${sx}" y2="52"
+            stroke="rgba(255,255,255,0.6)" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- other arm (at side) -->
+      <line x1="${sx}" y1="28" x2="${sx-14}" y2="42"
+            stroke="rgba(255,255,255,0.35)" stroke-width="2" stroke-linecap="round"/>
+      <!-- legs -->
+      <line x1="${sx}" y1="52" x2="${sx-10}" y2="72"
+            stroke="rgba(255,255,255,0.5)" stroke-width="2" stroke-linecap="round"/>
+      <line x1="${sx}" y1="52" x2="${sx+10}" y2="72"
+            stroke="rgba(255,255,255,0.5)" stroke-width="2" stroke-linecap="round"/>
+      <!-- raised arm (affected = phase color) -->
+      <line x1="${sx}" y1="${sy}" x2="${ex}" y2="${ey}"
+            stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+      <!-- dot at shoulder -->
+      <circle cx="${sx}" cy="${sy}" r="4" fill="${c}" opacity="0.9"/>
+      <!-- dot at hand -->
+      <circle cx="${ex}" cy="${ey}" r="3.5" fill="${c}"/>
+    </svg>`;
   }
 
   document.querySelectorAll('.nav-btn').forEach(btn => {
