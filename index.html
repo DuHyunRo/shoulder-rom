@@ -1284,18 +1284,7 @@
     }
   }
 
-  // Camera starts lazily on first visit to 측정 tab
-  let _cameraStarted = false;
-  const _origShowTab = showTab;
-  // Patch showTab to lazy-start camera when 측정 tab is first shown
-  // (we redefine showTab to add this hook)
-  const _showTabOrig = window._showTab = showTab;
-  document.querySelectorAll('.nav-btn').forEach(btn => {
-    // already has click listener — don't double-add
-  });
-
-  // Immediately start camera so it's ready (user lands on Today tab,
-  // camera loads in background so measurement is instant when they switch)
+  // Start camera in background so it's ready when user switches to 측정 tab
   startCamera();
 </script>
 </body>
