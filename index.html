@@ -4,35 +4,49 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>ShoulderROM</title>
 
-  <!-- Vendored QR library (no CDN dependency — conference WiFi is unreliable) -->
   <script src="vendor/qrcode.min.js"></script>
-
-  <!-- MediaPipe WASM preload hint — helps on slow connections -->
   <link rel="preload" as="fetch"
         href="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm/vision_wasm_internal.wasm"
         crossorigin>
 
   <style>
+    /* ── Design tokens ─────────────────────────────────────────────── */
+    :root {
+      --brand:       #00B4D8;
+      --brand-dark:  #0077A8;
+      --nav-h:       60px;
+      --hud-h:       76px;
+      --radius-sm:   8px;
+      --radius-md:   12px;
+      --radius-lg:   20px;
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     html, body {
       height: 100%; overflow: hidden;
       font-family: system-ui, -apple-system, sans-serif;
       background: #000; color: #111;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    /* ── Tab containers ───────────────────────────────── */
-    .tab { position: absolute; inset: 0; bottom: 44px; }
+    /* ── Tab containers ─────────────────────────────────────────────── */
+    .tab {
+      position: absolute;
+      inset: 0;
+      bottom: var(--nav-h);
+    }
 
-    /* ── Camera tab ───────────────────────────────────── */
-    #camera-tab { background: #000; }
+    /* ── Camera tab ─────────────────────────────────────────────────── */
+    #camera-tab { background: #0a0a0a; }
 
     #video {
       width: 100%; height: 100%;
       object-fit: cover;
-      transform: scaleX(-1); /* mirror so user sees themselves naturally */
+      transform: scaleX(-1);
       display: block;
     }
     #canvas {
@@ -41,136 +55,277 @@
       pointer-events: none;
     }
 
-    /* State overlays */
+    /* ── State overlays ─────────────────────────────────────────────── */
     .overlay {
       position: absolute; inset: 0;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      gap: 14px; text-align: center;
+      gap: 16px; text-align: center; padding: 32px;
     }
-    #ov-loading { background: rgba(0,0,0,0.85); }
-    #ov-denied  { background: rgba(0,0,0,0.90); }
-    #ov-npose   { background: rgba(0,0,0,0.45); pointer-events: none; }
+    #ov-loading { background: #0a0a0a; }
+    #ov-denied  { background: rgba(0,0,0,0.92); }
+    #ov-npose   { background: rgba(0,0,0,0.42); pointer-events: none; }
+
+    /* App brand in loading screen */
+    .brand-logo {
+      width: 56px; height: 56px;
+      border-radius: 14px;
+      background: var(--brand);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; margin-bottom: 4px;
+    }
+    .brand-name {
+      font-size: 22px; font-weight: 800;
+      color: #fff; letter-spacing: -0.3px;
+    }
+    .brand-sub {
+      font-size: 13px; color: rgba(255,255,255,0.5);
+      margin-top: -10px;
+    }
 
     .overlay p {
-      color: #fff; font-size: 15px; padding: 0 28px; line-height: 1.5;
+      color: #fff; font-size: 14px; line-height: 1.55;
+      max-width: 280px;
     }
     .overlay button {
-      padding: 9px 22px; border-radius: 8px;
-      border: 1.5px solid #fff; background: transparent;
-      color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;
+      min-height: 44px; padding: 0 24px;
+      border-radius: var(--radius-lg);
+      border: 2px solid rgba(255,255,255,0.4);
+      background: rgba(255,255,255,0.08);
+      color: #fff; font-size: 14px; font-weight: 700;
+      cursor: pointer; letter-spacing: 0.01em;
     }
+    .overlay button:active { opacity: 0.7; }
+
     .spinner {
-      width: 30px; height: 30px;
-      border: 3px solid rgba(255,255,255,0.2);
-      border-top-color: #fff; border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      width: 32px; height: 32px;
+      border: 3px solid rgba(255,255,255,0.15);
+      border-top-color: var(--brand);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Swap button (top-right corner of camera) */
+    /* ── Swap button ───────────────────────────────────────────────── */
     #swap-btn {
-      position: absolute; top: 10px; right: 10px;
-      background: rgba(0,0,0,0.55); color: #fff;
-      border: 1.5px solid rgba(255,255,255,0.45);
-      border-radius: 6px; padding: 5px 12px;
-      font-size: 11px; font-weight: 600; cursor: pointer; z-index: 2;
+      position: absolute; top: 12px; right: 12px;
+      min-height: 44px; padding: 0 16px;
+      background: rgba(0,0,0,0.55);
+      color: #fff;
+      border: 1.5px solid rgba(255,255,255,0.35);
+      border-radius: var(--radius-lg);
+      font-size: 12px; font-weight: 700;
+      cursor: pointer; z-index: 2;
+      display: flex; align-items: center; gap: 6px;
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+    }
+    #swap-btn:active { opacity: 0.7; }
+
+    /* ── Auto-capture ring overlay ─────────────────────────────────── */
+    #capture-ring {
+      position: absolute;
+      top: 12px; left: 12px;
+      width: 52px; height: 52px;
+      display: none; z-index: 3;
+    }
+    #capture-ring svg { width: 52px; height: 52px; transform: rotate(-90deg); }
+    #capture-ring circle.track {
+      fill: none; stroke: rgba(255,255,255,0.15); stroke-width: 4;
+    }
+    #capture-ring circle.fill {
+      fill: none; stroke: var(--brand); stroke-width: 4;
+      stroke-linecap: round;
+      stroke-dasharray: 138.2; /* 2π × r=22 */
+      stroke-dashoffset: 138.2;
+      transition: stroke-dashoffset 0.1s linear;
+    }
+    #capture-ring .ring-label {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 800; color: #fff;
     }
 
-    /* HUD strip */
+    /* ── Capture flash ─────────────────────────────────────────────── */
+    #capture-flash {
+      position: absolute; inset: 0;
+      background: #fff; opacity: 0;
+      pointer-events: none; z-index: 20;
+      transition: opacity 0.05s;
+    }
+    #capture-flash.flash { opacity: 0.7; }
+
+    /* ── Toast ─────────────────────────────────────────────────────── */
+    #toast {
+      position: absolute; bottom: calc(var(--hud-h) + 16px); left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(0,0,0,0.82);
+      color: #fff; font-size: 13px; font-weight: 700;
+      padding: 10px 20px; border-radius: var(--radius-lg);
+      white-space: nowrap; pointer-events: none;
+      opacity: 0; transition: opacity 0.2s, transform 0.2s;
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      z-index: 30;
+    }
+    #toast.show {
+      opacity: 1; transform: translateX(-50%) translateY(0);
+    }
+
+    /* ── HUD strip ─────────────────────────────────────────────────── */
     #hud {
       position: absolute; bottom: 0; left: 0; right: 0;
-      background: rgba(0,0,0,0.72);
+      height: var(--hud-h);
+      background: rgba(0,0,0,0.75);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
       display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 20px; z-index: 2;
+      padding: 0 20px; z-index: 2;
     }
-    .hud-stat { text-align: center; min-width: 64px; }
-    .hud-val  { font-size: 24px; font-weight: 700; color: #fff; line-height: 1; }
-    .hud-lbl  { font-size: 9px; color: #aaa; text-transform: uppercase; letter-spacing: 0.07em; margin-top: 2px; }
-    #save-btn {
-      padding: 9px 22px; border-radius: 20px;
-      background: #fff; color: #111; border: none;
-      font-size: 13px; font-weight: 700; cursor: pointer;
-    }
-    #save-btn:active { opacity: 0.75; }
-    #save-btn:disabled { opacity: 0.4; cursor: default; }
+    .hud-stat { text-align: center; min-width: 72px; }
+    .hud-val  { font-size: 28px; font-weight: 800; color: #fff; line-height: 1; letter-spacing: -0.5px; }
+    .hud-lbl  { font-size: 10px; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 0.07em; margin-top: 3px; }
+    .hud-target { font-size: 10px; color: var(--brand); font-weight: 700; margin-top: 1px; }
 
-    /* ── Progress / Share tabs ───────────────────────── */
-    #progress-tab, #share-tab {
-      background: #fff; overflow-y: auto;
+    #save-btn {
+      min-height: 44px; padding: 0 26px;
+      border-radius: var(--radius-lg);
+      background: var(--brand); color: #fff;
+      border: none; font-size: 14px; font-weight: 800;
+      cursor: pointer; letter-spacing: 0.01em;
+      transition: opacity 0.15s;
+    }
+    #save-btn:active  { opacity: 0.8; }
+    #save-btn:disabled { opacity: 0.35; cursor: default; background: #555; }
+
+    /* ── Scrollable tabs (Progress / Share / Guide) ────────────────── */
+    #progress-tab, #share-tab, #guide-tab {
+      background: #f8fafb; overflow-y: auto;
       -webkit-overflow-scrolling: touch;
     }
 
-    /* ── Bottom navigation ───────────────────────────── */
+    /* ── Bottom navigation ─────────────────────────────────────────── */
     #nav {
       position: fixed; bottom: 0; left: 0; right: 0;
-      height: 44px; display: flex;
-      background: #fff; border-top: 1px solid #e5e5e5;
+      height: var(--nav-h);
+      display: flex;
+      background: #fff;
+      border-top: 1px solid #e8e8e8;
       z-index: 10;
+      /* Safe area for notch phones */
+      padding-bottom: env(safe-area-inset-bottom, 0px);
     }
     .nav-btn {
       flex: 1; display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      font-size: 9px; color: #aaa; gap: 2px;
+      font-size: 9px; font-weight: 700;
+      color: #aaa; gap: 4px;
       text-transform: uppercase; letter-spacing: 0.05em;
       cursor: pointer; user-select: none;
-      border-top: 2px solid transparent;
-      border: none; background: none;
-      padding: 0;
+      border: none; background: none; padding: 0;
+      position: relative;
+      transition: color 0.15s;
     }
-    .nav-btn.active { color: #111; border-top: 2px solid #111; }
-    .nav-icon { font-size: 16px; }
+    .nav-btn::before {
+      content: '';
+      position: absolute; top: 0; left: 20%; right: 20%;
+      height: 2px; border-radius: 2px;
+      background: var(--brand);
+      transform: scaleX(0);
+      transition: transform 0.15s;
+    }
+    .nav-btn.active { color: var(--brand); }
+    .nav-btn.active::before { transform: scaleX(1); }
+    .nav-icon {
+      width: 22px; height: 22px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .nav-icon svg { width: 20px; height: 20px; }
 
-    /* Portrait hint on landscape phones */
+    /* ── Portrait hint ─────────────────────────────────────────────── */
     @media (orientation: landscape) and (max-height: 480px) {
-      #rotate-hint {
-        display: flex; position: fixed; inset: 0; z-index: 999;
-        background: #000; color: #fff;
-        align-items: center; justify-content: center;
-        font-size: 15px; text-align: center; padding: 24px;
-      }
+      #rotate-hint { display: flex; }
     }
-    #rotate-hint { display: none; }
+    #rotate-hint {
+      display: none; position: fixed; inset: 0; z-index: 999;
+      background: #0a0a0a; color: #fff;
+      align-items: center; justify-content: center;
+      font-size: 15px; text-align: center; padding: 32px;
+      flex-direction: column; gap: 12px;
+    }
   </style>
 </head>
 <body>
 
-<!-- Landscape warning (CSS-driven) -->
-<div id="rotate-hint">Please rotate to portrait mode for best results.</div>
+<div id="rotate-hint">
+  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <rect x="5" y="2" width="14" height="20" rx="2"/>
+    <path d="M12 18h.01"/>
+  </svg>
+  Rotate to portrait for best results
+</div>
 
-<!-- Camera tab -->
+<!-- ── Camera tab ─────────────────────────────────────────────────── -->
 <div id="camera-tab" class="tab">
   <video id="video" autoplay playsinline muted></video>
   <canvas id="canvas"></canvas>
 
   <!-- Loading overlay -->
   <div id="ov-loading" class="overlay">
-    <div class="spinner"></div>
+    <div class="brand-logo">💪</div>
+    <div class="brand-name">ShoulderROM</div>
+    <div class="brand-sub">Range of Motion Tracker</div>
+    <div class="spinner" style="margin-top:8px;"></div>
     <p>Loading pose model…</p>
   </div>
 
   <!-- Camera denied overlay -->
   <div id="ov-denied" class="overlay" style="display:none;">
-    <p>Camera access required</p>
+    <div class="brand-logo" style="background:#ef4444;">⚠</div>
+    <p id="denied-msg">Camera access required</p>
     <button id="retry-btn">Try again</button>
   </div>
 
   <!-- No-pose overlay -->
   <div id="ov-npose" class="overlay" style="display:none;">
-    <p>Move back — full body needed</p>
+    <p style="font-size:14px;">Step back so your full body is visible</p>
   </div>
 
-  <button id="swap-btn">Swap sides</button>
+  <!-- Auto-capture ring (top-left) -->
+  <div id="capture-ring">
+    <svg viewBox="0 0 52 52">
+      <circle class="track" cx="26" cy="26" r="22"/>
+      <circle class="fill" id="ring-fill" cx="26" cy="26" r="22"/>
+    </svg>
+    <div class="ring-label" id="ring-label">MAX</div>
+  </div>
 
+  <!-- Capture flash effect -->
+  <div id="capture-flash"></div>
+
+  <!-- Toast notification -->
+  <div id="toast"></div>
+
+  <!-- Swap button -->
+  <button id="swap-btn">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/>
+    </svg>
+    Swap sides
+  </button>
+
+  <!-- HUD -->
   <div id="hud">
     <div class="hud-stat">
       <div class="hud-val" id="hud-l">—°</div>
       <div class="hud-lbl" id="lbl-l">Left</div>
+      <div class="hud-target" id="tgt-l"></div>
     </div>
     <button id="save-btn" disabled>Save</button>
     <div class="hud-stat">
       <div class="hud-val" id="hud-r">—°</div>
       <div class="hud-lbl" id="lbl-r">Right</div>
+      <div class="hud-target" id="tgt-r"></div>
     </div>
   </div>
 </div>
@@ -181,16 +336,46 @@
 <!-- Share tab -->
 <div id="share-tab" class="tab" style="display:none;"></div>
 
-<!-- Bottom nav -->
+<!-- Guide tab -->
+<div id="guide-tab" class="tab" style="display:none;"></div>
+
+<!-- Bottom nav — SVG icons, no emoji -->
 <nav id="nav">
   <button class="nav-btn active" data-tab="camera-tab">
-    <span class="nav-icon">📷</span>Measure
+    <span class="nav-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+        <circle cx="12" cy="13" r="4"/>
+      </svg>
+    </span>
+    Measure
   </button>
   <button class="nav-btn" data-tab="progress-tab">
-    <span class="nav-icon">📈</span>Progress
+    <span class="nav-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
+    </span>
+    Progress
+  </button>
+  <button class="nav-btn" data-tab="guide-tab">
+    <span class="nav-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 8v4l3 3"/>
+      </svg>
+    </span>
+    Guide
   </button>
   <button class="nav-btn" data-tab="share-tab">
-    <span class="nav-icon">🔗</span>Share
+    <span class="nav-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+      </svg>
+    </span>
+    Share
   </button>
 </nav>
 
@@ -200,16 +385,108 @@
   import { getAffectedSide, toggleSwap } from './state.js';
   import { renderProgress }              from './progress.js';
   import { renderShare }                 from './share.js';
+  import { renderGuide, getCurrentPhase, getTargetAngleForPhase } from './guide.js';
 
-  // ── Bootstrap ─────────────────────────────────────────────────────
+  // ── Bootstrap ───────────────────────────────────────────────────────
   initStorage();
 
-  // ── Shared state ──────────────────────────────────────────────────
+  // ── Guide: get target angle for current phase ────────────────────────
+  const targetAngle = getTargetAngleForPhase(getCurrentPhase());
+
+  // Show target in HUD
+  document.getElementById('tgt-l').textContent = `Target ${targetAngle}°`;
+  document.getElementById('tgt-r').textContent = `Target ${targetAngle}°`;
+
+  // ── Shared state ─────────────────────────────────────────────────────
   let leftAngle  = null;
   let rightAngle = null;
   let noPoseTimeout = null;
 
-  // ── Tab navigation ────────────────────────────────────────────────
+  // ── Auto-capture state ───────────────────────────────────────────────
+  const CAPTURE_HOLD_MS  = 2000;   // hold at peak for 2 seconds
+  const CAPTURE_COOLDOWN = 5000;   // don't re-capture for 5 seconds after a capture
+  const PEAK_TOLERANCE   = 3;      // degrees within peak counts as "holding"
+  let sessionPeakL       = 0;
+  let sessionPeakR       = 0;
+  let peakHoldStartL     = null;
+  let peakHoldStartR     = null;
+  let lastCaptureTime    = 0;
+
+  const $ring       = document.getElementById('capture-ring');
+  const $ringFill   = document.getElementById('ring-fill');
+  const $ringLabel  = document.getElementById('ring-label');
+  const $flash      = document.getElementById('capture-flash');
+  const $toast      = document.getElementById('toast');
+
+  const RING_CIRCUMFERENCE = 138.2; // 2π × r=22
+
+  function showToast(msg, durationMs = 2500) {
+    $toast.textContent = msg;
+    $toast.classList.add('show');
+    setTimeout(() => $toast.classList.remove('show'), durationMs);
+  }
+
+  function triggerFlash() {
+    $flash.classList.add('flash');
+    setTimeout(() => $flash.classList.remove('flash'), 180);
+  }
+
+  function updateCaptureRing(progress) {
+    // progress: 0–1
+    if (progress <= 0) {
+      $ring.style.display = 'none';
+      return;
+    }
+    $ring.style.display = 'block';
+    const offset = RING_CIRCUMFERENCE * (1 - progress);
+    $ringFill.style.strokeDashoffset = offset;
+    $ringLabel.textContent = progress >= 1 ? '✓' : 'MAX';
+  }
+
+  function checkPeakCapture(angle, side) {
+    if (angle === null) return;
+    const now = performance.now();
+    const isLeft  = side === 'left';
+    let peak      = isLeft ? sessionPeakL : sessionPeakR;
+    let holdStart = isLeft ? peakHoldStartL : peakHoldStartR;
+
+    if (angle > peak + PEAK_TOLERANCE) {
+      // New peak — reset hold timer
+      if (isLeft) { sessionPeakL = angle; peakHoldStartL = now; }
+      else         { sessionPeakR = angle; peakHoldStartR = now; }
+      holdStart = now;
+    } else if (angle >= peak - PEAK_TOLERANCE && peak > 10) {
+      // Holding near peak
+      if (holdStart === null) {
+        if (isLeft) peakHoldStartL = now; else peakHoldStartR = now;
+        holdStart = now;
+      }
+      const held     = now - holdStart;
+      const progress = Math.min(1, held / CAPTURE_HOLD_MS);
+      updateCaptureRing(progress);
+
+      if (held >= CAPTURE_HOLD_MS && now - lastCaptureTime > CAPTURE_COOLDOWN) {
+        // Auto-capture!
+        lastCaptureTime = now;
+        if (isLeft) peakHoldStartL = null; else peakHoldStartR = null;
+        updateCaptureRing(0);
+        triggerFlash();
+
+        const ok = saveSession(leftAngle ?? 0, rightAngle ?? 0);
+        if (ok) {
+          showToast(`Peak captured — ${angle}°`);
+        }
+      }
+      return; // ring already updated
+    } else {
+      // Dropped from peak
+      if (isLeft) peakHoldStartL = null; else peakHoldStartR = null;
+    }
+
+    updateCaptureRing(0);
+  }
+
+  // ── Tab navigation ──────────────────────────────────────────────────
   function showTab(name) {
     document.querySelectorAll('.tab').forEach(el => {
       el.style.display = el.id === name ? '' : 'none';
@@ -219,31 +496,35 @@
     });
     if (name === 'progress-tab') renderProgress(document.getElementById('progress-tab'));
     if (name === 'share-tab')    renderShare(document.getElementById('share-tab'), null);
+    if (name === 'guide-tab')    renderGuide(document.getElementById('guide-tab'));
   }
 
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => showTab(btn.dataset.tab));
   });
 
-  // ── Swap button ───────────────────────────────────────────────────
+  // ── Swap button ──────────────────────────────────────────────────────
   document.getElementById('swap-btn').addEventListener('click', () => {
     const side = toggleSwap();
     document.getElementById('lbl-l').textContent = side === 'left'  ? 'Left (Affected)'  : 'Left';
     document.getElementById('lbl-r').textContent = side === 'right' ? 'Right (Affected)'  : 'Right';
   });
 
-  // ── Save button ───────────────────────────────────────────────────
+  // ── Save button ──────────────────────────────────────────────────────
   const saveBtn = document.getElementById('save-btn');
   saveBtn.addEventListener('click', () => {
     if (leftAngle === null && rightAngle === null) return;
     const ok = saveSession(leftAngle ?? 0, rightAngle ?? 0);
-    if (ok) showTab('progress-tab');
+    if (ok) {
+      showToast('Session saved');
+      setTimeout(() => showTab('progress-tab'), 600);
+    }
   });
 
-  // ── Retry camera ──────────────────────────────────────────────────
+  // ── Retry camera ─────────────────────────────────────────────────────
   document.getElementById('retry-btn').addEventListener('click', startCamera);
 
-  // ── Camera + pose ─────────────────────────────────────────────────
+  // ── Camera + pose ────────────────────────────────────────────────────
   const video  = document.getElementById('video');
   const canvas = document.getElementById('canvas');
 
@@ -255,16 +536,14 @@
     $denied.style.display  = 'none';
     $loading.style.display = '';
 
-    // Camera API requires HTTPS (or localhost) — show a clear error on plain HTTP
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       $loading.style.display = 'none';
-      $denied.querySelector('p').textContent =
+      document.getElementById('denied-msg').textContent =
         'Camera requires a secure connection (HTTPS). Open via localhost or deploy to Netlify.';
       $denied.style.display = '';
       return;
     }
 
-    // Request camera — selfie mode, capped at 720p to avoid perf issues on mobile
     let stream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({
@@ -276,16 +555,19 @@
       });
     } catch (err) {
       $loading.style.display = 'none';
-      $denied.querySelector('p').textContent =
-        err.name === 'NotAllowedError' ? 'Camera access denied — please allow in browser settings.' : 'Camera access required';
-      $denied.style.display  = '';
+      document.getElementById('denied-msg').textContent =
+        err.name === 'NotAllowedError'
+          ? 'Camera access denied — please allow in browser settings.'
+          : 'Camera access required to measure range of motion.';
+      $denied.style.display = '';
       return;
     }
 
     video.srcObject = stream;
-    try { await video.play(); } catch { /* autoplay may be blocked — playsinline handles most cases */ }
+    try { await video.play(); } catch { /* playsinline handles most cases */ }
 
-    // Init MediaPipe
+    const affected = getAffectedSide();
+
     try {
       await initPose(video, canvas, {
         onReady() {
@@ -293,7 +575,6 @@
         },
 
         onFrame(left, right) {
-          // Update angle state
           leftAngle  = left?.angle  ?? null;
           rightAngle = right?.angle ?? null;
 
@@ -304,7 +585,12 @@
           // Enable Save once we have at least one reading
           saveBtn.disabled = (leftAngle === null && rightAngle === null);
 
-          // No-pose overlay with 800ms debounce (avoids flickering on brief occlusions)
+          // Auto-capture: track peak for affected side only
+          const affNow = getAffectedSide();
+          if (affNow === 'left'  && left)  checkPeakCapture(left.angle,  'left');
+          if (affNow === 'right' && right) checkPeakCapture(right.angle, 'right');
+
+          // No-pose debounce (800ms)
           clearTimeout(noPoseTimeout);
           if (!left && !right) {
             noPoseTimeout = setTimeout(() => { $npose.style.display = ''; }, 800);
@@ -315,12 +601,14 @@
 
         onError(err) {
           console.error('MediaPipe init failed:', err);
-          $loading.innerHTML = '<p style="color:#fff;padding:24px;">Model failed to load — refresh the page</p>';
+          $loading.innerHTML =
+            '<p style="color:#fff;padding:24px;line-height:1.6;">Pose model failed to load.<br>Check your connection and refresh.</p>';
         },
       });
     } catch (err) {
       console.error('initPose threw:', err);
-      $loading.innerHTML = '<p style="color:#fff;padding:24px;">Model failed to load — refresh the page</p>';
+      $loading.innerHTML =
+        '<p style="color:#fff;padding:24px;line-height:1.6;">Pose model failed to load.<br>Check your connection and refresh.</p>';
     }
   }
 

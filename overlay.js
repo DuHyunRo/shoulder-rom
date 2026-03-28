@@ -10,8 +10,9 @@
  * Colors: red = affected side, blue = reference side.
  */
 
-import { getAffectedSide } from './state.js';
-import { getArc }          from './arc.js';
+import { getAffectedSide }                          from './state.js';
+import { getArc }                                    from './arc.js';
+import { getCurrentPhase, getTargetAngleForPhase }   from './guide.js';
 
 const C = {
   affected:  '#ef4444',  // red
@@ -48,6 +49,12 @@ export function drawOverlay(ctx, canvas, left, right) {
   if (left && right) {
     const deficit = Math.abs(left.angle - right.angle);
     drawDeficit(ctx, w, deficit);
+  }
+
+  // Target angle arc (dashed, for current rehab phase)
+  const target = getTargetAngleForPhase(getCurrentPhase());
+  if (left || right) {
+    drawTargetArc(ctx, w, h, target, left, right, affected);
   }
 
   // Bottom disclaimers
@@ -157,6 +164,62 @@ function drawText(ctx, text, x, y, align, color, font) {
   ctx.fillStyle = color;
   ctx.textAlign = align;
   ctx.fillText(text, x, y);
+  ctx.restore();
+}
+
+/**
+ * Draws a dashed arc from the shoulder landmark showing the target ROM angle.
+ * Helps patients understand how much further they need to lift.
+ */
+function drawTargetArc(ctx, w, h, targetDeg, left, right, affected) {
+  // Pick the affected side landmark for the arc origin
+  const side = (affected === 'left' && left) ? left : (affected === 'right' && right) ? right : (left || right);
+  if (!side) return;
+
+  const { shoulder, hip } = side;
+  const sX = fx(shoulder.x, w), sY = fy(shoulder.y, h);
+  const hX = fx(hip.x,      w), hY = fy(hip.y,      h);
+
+  // Body axis direction (shoulder→hip)
+  const bDx = hX - sX, bDy = hY - sY;
+  const bLen = Math.sqrt(bDx * bDx + bDy * bDy);
+  if (bLen === 0) return;
+
+  // Angle from body axis (measured from vertical/body-down direction)
+  // We rotate the body vector by targetDeg to get the target arm direction
+  const targetRad = (targetDeg * Math.PI) / 180;
+  const arcRadius = Math.min(w, h) * 0.15;
+
+  // Reference angle of body vector in screen space
+  const bodyAngle = Math.atan2(bDy, bDx);
+
+  // Target direction: bodyAngle - targetDeg (arm raises above body line)
+  const targetAngleScreen = bodyAngle - targetRad;
+
+  // Draw dashed arc from body direction (0°) to target angle
+  ctx.save();
+  ctx.setLineDash([5, 6]);
+  ctx.strokeStyle = 'rgba(0, 180, 216, 0.75)'; // --brand teal
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(sX, sY, arcRadius, bodyAngle, targetAngleScreen, true);
+  ctx.stroke();
+
+  // Small dot at target endpoint
+  const dotX = sX + arcRadius * Math.cos(targetAngleScreen);
+  const dotY = sY + arcRadius * Math.sin(targetAngleScreen);
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.arc(dotX, dotY, 4, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0, 180, 216, 0.9)';
+  ctx.fill();
+
+  // Label
+  ctx.font = 'bold 10px system-ui';
+  ctx.fillStyle = 'rgba(0, 180, 216, 0.9)';
+  ctx.textAlign = 'center';
+  ctx.fillText(`goal ${targetDeg}°`, dotX, dotY - 8);
+
   ctx.restore();
 }
 
